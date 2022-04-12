@@ -1,0 +1,90 @@
+{
+    "configurationType": "Deployment",
+    "appLocation": "eastus",
+    "infrastructureConfiguration": {
+        "appResourceGroup": "ankitTestRG",
+        "deploymentType": "ThreeTier",
+        "centralServer": {
+            "subnetId": "/subscriptions/49d64d54-e966-4c46-a868-1999802b762c/resourceGroups/SAP-E2ETest-rg/providers/Microsoft.Network/virtualNetworks/install-test-vnet/subnets/appsubnet",
+            "virtualMachineConfiguration": {
+                "vmSize": "Standard_E8ds_v4",
+                "imageReference": {
+                    "sku": "gen2",
+                    "publisher": "SUSE",
+                    "version": "2022.01.26",
+                    "offer": "sles-sap-15-sp3"
+                },
+                "osProfile": {
+                    "adminUsername": "azureuser",
+                    "osConfiguration": {
+                        "osType": "Linux",
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCSvOMb/dlgA3tm5tdWCHUWQl1GiQCtqnbi8ooz4gwnEoL3uXCLfRl5fSWsxym4oZv2x+8K+P5EcQ6GWAcWH/SicNONFUJan2iwV+9Z9DeGxLksEwvNEEE/ikguZbhWBuz4Xy8vEyRJo1jWqlj2i3DRECSerm0rfYvV128iVoX6MLHR3BxDUZ5sxl/E+Tr3QEbxxAiKV7+v1m/TWyApBkBVvCLcXQYVLC2V84FuFOirP3ewXwYv9XMR895kfmsB9IXLyoo8D6lyroKWb9EXzqNEJxZ4Xg5pFd8499jAH8NmCHZsU79tOqeSEEf/LQCnFLyPfe2dBtTvbR8fiS3aEFOY34wPJ7hB/OMDWeGalX/H9LBAtLG83xPpG91UySOfL94UdX7QxEW+gDEOmhJ25+LhZbN7sAlEhP0rBHpdTrXLDJdvYPFZL5ncKLnGYGcsdRNMvGTUHE4rGVtPE6zTBcsZQpxidOpm9AzyJU+DTmF2FIxu/9V51Cb+GDmm36ew+hE= generated-by-azure"
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "instanceCount": 1
+        },
+        "applicationServer": {
+            "subnetId": "/subscriptions/49d64d54-e966-4c46-a868-1999802b762c/resourceGroups/SAP-E2ETest-rg/providers/Microsoft.Network/virtualNetworks/install-test-vnet/subnets/appsubnet",
+            "virtualMachineConfiguration": {
+                "vmSize": "Standard_E4ds_v4",
+                "imageReference": {
+                    "sku": "gen2",
+                    "publisher": "SUSE",
+                    "version": "2022.01.26",
+                    "offer": "sles-sap-15-sp3"
+                },
+                "osProfile": {
+                    "adminUsername": "azureuser",
+                    "osConfiguration": {
+                        "osType": "Linux",
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCSvOMb/dlgA3tm5tdWCHUWQl1GiQCtqnbi8ooz4gwnEoL3uXCLfRl5fSWsxym4oZv2x+8K+P5EcQ6GWAcWH/SicNONFUJan2iwV+9Z9DeGxLksEwvNEEE/ikguZbhWBuz4Xy8vEyRJo1jWqlj2i3DRECSerm0rfYvV128iVoX6MLHR3BxDUZ5sxl/E+Tr3QEbxxAiKV7+v1m/TWyApBkBVvCLcXQYVLC2V84FuFOirP3ewXwYv9XMR895kfmsB9IXLyoo8D6lyroKWb9EXzqNEJxZ4Xg5pFd8499jAH8NmCHZsU79tOqeSEEf/LQCnFLyPfe2dBtTvbR8fiS3aEFOY34wPJ7hB/OMDWeGalX/H9LBAtLG83xPpG91UySOfL94UdX7QxEW+gDEOmhJ25+LhZbN7sAlEhP0rBHpdTrXLDJdvYPFZL5ncKLnGYGcsdRNMvGTUHE4rGVtPE6zTBcsZQpxidOpm9AzyJU+DTmF2FIxu/9V51Cb+GDmm36ew+hE= generated-by-azure"
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "instanceCount": 2
+        },
+        "databaseServer": {
+            "databaseType": "HANA",
+            "subnetId": "/subscriptions/49d64d54-e966-4c46-a868-1999802b762c/resourceGroups/SAP-E2ETest-rg/providers/Microsoft.Network/virtualNetworks/install-test-vnet/subnets/dbsubnet",
+            "virtualMachineConfiguration": {
+                "vmSize": "Standard_M32ts",
+                "imageReference": {
+                    "sku": "gen2",
+                    "publisher": "SUSE",
+                    "version": "2022.01.26",
+                    "offer": "sles-sap-15-sp3"
+                },
+                "osProfile": {
+                    "adminUsername": "azureuser",
+                    "osConfiguration": {
+                        "osType": "Linux",
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCSvOMb/dlgA3tm5tdWCHUWQl1GiQCtqnbi8ooz4gwnEoL3uXCLfRl5fSWsxym4oZv2x+8K+P5EcQ6GWAcWH/SicNONFUJan2iwV+9Z9DeGxLksEwvNEEE/ikguZbhWBuz4Xy8vEyRJo1jWqlj2i3DRECSerm0rfYvV128iVoX6MLHR3BxDUZ5sxl/E+Tr3QEbxxAiKV7+v1m/TWyApBkBVvCLcXQYVLC2V84FuFOirP3ewXwYv9XMR895kfmsB9IXLyoo8D6lyroKWb9EXzqNEJxZ4Xg5pFd8499jAH8NmCHZsU79tOqeSEEf/LQCnFLyPfe2dBtTvbR8fiS3aEFOY34wPJ7hB/OMDWeGalX/H9LBAtLG83xPpG91UySOfL94UdX7QxEW+gDEOmhJ25+LhZbN7sAlEhP0rBHpdTrXLDJdvYPFZL5ncKLnGYGcsdRNMvGTUHE4rGVtPE6zTBcsZQpxidOpm9AzyJU+DTmF2FIxu/9V51Cb+GDmm36ew+hE= generated-by-azure"
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "instanceCount": 1
+        }
+    }
+}
