@@ -20,7 +20,7 @@
                     "ssh": {
                         "publicKeys": [
                             {
-                                "keyData": "ssh-rsa 
+                                "keyData": "ssh-rsa" 
                              }
                         ]
                     }
