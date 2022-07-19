@@ -1,0 +1,32 @@
+{
+    "configurationType": "Deployment",
+    "appLocation": "eastus",
+    "infrastructureConfiguration": {
+        "deploymentType": "SingleServer",
+        "subnetId": "/subscriptions/abc/resourceGroups/xyz/providers/Microsoft.Network/virtualNetworks/abc/subnets/appsubnet",
+        "virtualMachineConfiguration": {
+            "vmSize": "Standard_E32ds_v4",
+            "imageReference": {
+                "sku": "gen2",
+                "publisher": "SUSE",
+                "version": "2022.01.26",
+                "offer": "sles-sap-15-sp3"
+            },
+            "osProfile": {
+                "adminUsername": "azureuser",
+                "osConfiguration": {
+                    "osType": "Linux",
+                    "disablePasswordAuthentication": true,
+                    "ssh": {
+                        "publicKeys": [
+                            {
+                                "keyData": "ssh-rsa 
+                             }
+                        ]
+                    }
+                }
+            }
+        },
+        "appResourceGroup": "abc"
+    }
+}

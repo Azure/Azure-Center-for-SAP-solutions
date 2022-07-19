@@ -1,0 +1,40 @@
+{
+    "configurationType": "Deployment",
+    "appLocation": "eastus",
+    "infrastructureConfiguration": {
+        "deploymentType": "SingleServer",
+        "subnetId": "/subscriptions/xyz/resourceGroups/abc/providers/Microsoft.Network/virtualNetworks/abc/subnets/appsubnet",
+        "virtualMachineConfiguration": {
+            "vmSize": "Standard_E32ds_v4",
+            "imageReference": {
+                "sku": "gen2",
+                "publisher": "SUSE",
+                "version": "2022.01.26",
+                "offer": "sles-sap-15-sp3"
+            },
+            "osProfile": {
+                "adminUsername": "azureuser",
+                "osConfiguration": {
+                    "osType": "Linux",
+                    "disablePasswordAuthentication": true,
+                    "ssh": {
+                        "publicKeys": [
+                            {
+                                "keyData": "ssh-rsa"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        "appResourceGroup": "misadi-test"
+    },
+    "softwareConfiguration": {
+        "softwareInstallationType": "ServiceInitiated",
+        "bomUrl": "https://abc.blob.core.windows.net/sapbits/sapfiles/boms/S41909SPS03_v0011ms/S41909SPS03_v0011ms.yaml",
+        "softwareVersion": "SAP S/4HANA 1909 SPS 03",
+        "sapFqdn": "test.contoso.sap",
+        "sapBitsStorageAccountId": "/subscriptions/abc/resourceGroups/xyz/providers/Microsoft.Storage/storageAccounts/abc",
+        "sshPrivateKey": "-----BEGIN RSA PRIVATE KEY-----\n-----END RSA PRIVATE KEY-----"
+    }
+}
