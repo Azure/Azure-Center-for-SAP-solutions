@@ -1,5 +1,15 @@
 # Azure Center for SAP solutions (ACSS) CLI guide
 
+
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Install Extension](#install-extension)
+- [Notes while using extension](#notes-while-using-extension)
+- [Sample commands](#sample-commands)
+- [Deploying or Registering an SAP system](#deploying-or-registering-an-sap-system)
+- [Starting or Stopping an SAP system](#starting-or-stopping-an-sap-system)
+- [List of Commands](#list-of-commands)
 ## Introduction
 
 The different features of Azure Center for SAP solutions (ACSS) are available from the command line interface (CLI). This document will guide you on how to install Azure CLI and the ACSS extension and then also walk you through the different commands available for ACSS in Azure CLI.  
@@ -87,7 +97,7 @@ az workloads sap-virtual-instance list
 az workloads sap-virtual-instance show --resource-group "test-rg" --name "<Name of Virtual instance for SAP solutions)>" 
 ```
 
-## Deploying/Registering an SAP system
+## Deploying or Registering an SAP system
 
 The command group for deploying or registering an SAP system is the same as above: **az workloads sap-virtual-instance**
 
@@ -131,6 +141,30 @@ az workloads sap-virtual-instance create --location "eastus2" --configuration "@
 ```
 az workloads sap-virtual-instance create --location "eastus2" --configuration "@Register Payload.json" --environment "Prod" --sap-product "S4HANA" --resource-group "test-rg" --sap-virtual-instance-name "N51" 
 ```
+
+#### Command: az workloads sap-virtual-instance update 
+**Example**
+```
+az workloads sap-virtual-instance update --resource-group "test-rg" --name "AG5" --tags Tag1='TagValue'
+```
+
+#### Command: az workloads sap-virtual-instance delete 
+**Example**
+```
+az workloads sap-virtual-instance delete --resource-group "test-rg" --name "AG5" 
+```
+
+## Starting or Stopping an SAP system
+
+#### Command: az workloads sap-virtual-instance start/stop
+
+- Please refer to the documentation for Start/Stop feature in ACSS [here](https://docs.microsoft.com/en-us/azure/center-sap-solutions/start-stop-sap-systems). 
+
+**Example**
+```
+az workloads sap-virtual-instance start --sap-password "<password>" --sap-username "<username>" --resource-group "test-rg" --name "AG5" 
+```
+
 
 ## List of Commands
 
