@@ -134,12 +134,12 @@ az workloads sap-virtual-instance create --location "eastus2" --configuration "@
 -	Registering an SAP system in Azure with ACSS
 
      - The example below shows the command for registering an existing SAP system in Azure with ACSS 
-     - Please note that the command remains the same, but the payload is different. In this payload, you need to provide the VM ID for the central server. 
+     - Please note that the command remains the same, but the payload is different. In this payload, you need to provide the VM ID for the central server. In a separate payload you should have the User Assigned Managed identity that you intend to use for registering this system.  
      - For prerequisites of registering, please see [here](https://docs.microsoft.com/en-us/azure/center-sap-solutions/register-existing-system)
-     - You can see the sample payload here [Register Payload.json](https://github.com/Azure/Azure-Center-for-SAP-solutions-preview/blob/main/CLI_Documents/Register%20Payload.json)
+     - You can see the sample payloads here [Register Payload.json](https://github.com/Azure/Azure-Center-for-SAP-solutions-preview/blob/main/CLI_Documents/Register%20Payload.json), [MSI.json]
 
 ```
-az workloads sap-virtual-instance create --location "eastus2" --configuration "@Register Payload.json" --environment "Prod" --sap-product "S4HANA" --resource-group "test-rg" --sap-virtual-instance-name "N51" 
+az workloads sap-virtual-instance create --location "eastus2" --configuration "Registerpayload.json" --environment "Prod" --sap-product "S4HANA" --sap-virtual-instance-name "CS3" --name "KN1-MRG" --resource-group "CONTOSO-4" --user-assigned-identities "MSI.json" --type "UserAssigned" 
 ```
 
 #### Command: az workloads sap-virtual-instance update 
