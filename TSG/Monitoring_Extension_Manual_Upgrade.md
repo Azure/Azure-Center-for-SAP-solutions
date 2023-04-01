@@ -35,9 +35,9 @@ contains(name, 'MonitoringExtensionWindows')) ].id" -o tsv) \
 ```
 
 
-## FAQ: 
+## FAQ 
 
-### Sample Input and sample output 
+### Sample Input and sample Output 
 
 #### Input:  
 ```
@@ -90,7 +90,7 @@ Yes. The script can be run on any machine with Azure CLI installed. Please follo
 - Run "az login" command
 - Execute the steps mentioned in Step2, replacing ‘YOUR-SUBSCRIPTION-ID’ with the actual subscriptionId.
 
-## Commands ran successfully but the VIS is showing ‘FailedToInstallMonitoringExtension’ error. 
+## Commands ran successfully but the VIS is showing ‘FailedToInstallMonitoringExtension’ error
 The above error can be seen if the Monitoring extension was in a failed provisioning state before the upgrade. To fix this, you can delete and register the VIS again.
 
 
