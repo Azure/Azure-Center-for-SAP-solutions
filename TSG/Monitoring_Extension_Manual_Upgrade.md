@@ -4,7 +4,7 @@ Please follow these steps to manually upgrade the Windows Monitoring Extension o
  
 *Pre-requisite:* To be able to run the necessary commands, you will require *Contributor* access or higher on the subscription.  
 
-1. Open Cloud shell 
+## 1. Open Cloud shell 
 -	Sign into the [Azure Portal](https://portal.azure.com) using your Azure account credentials.
 -	Once you are signed in, click on the Cloud Shell icon located in the top right corner of the Azure Portal, next to your username.
 
@@ -13,7 +13,7 @@ Please follow these steps to manually upgrade the Windows Monitoring Extension o
 -  If you are using Cloud Shell for the first time, you will be prompted to choose a storage account for your Cloud Shell environment. Select "Create storage" to create a new storage account or select an existing one.
 -	After you have selected a storage account, the Cloud Shell environment will start initializing. This may take a few seconds.
 
-2.	Execute below steps in CloudShell, 
+## 2.	Execute below steps in CloudShell, 
 - Replace YOUR-SUBSCRIPTION-ID with the actual subscriptionId
 - Copy paste below content into CloudShell and hit Enter
 
