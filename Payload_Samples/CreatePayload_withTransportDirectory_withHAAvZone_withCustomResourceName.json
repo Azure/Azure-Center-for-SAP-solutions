@@ -4,7 +4,7 @@
   "infrastructureConfiguration": {
     "deploymentType": "ThreeTier",
     "highAvailabilityConfig": {
-      "highAvailabilityType": "AvailabilityZone"
+      "highAvailabilityType": "AvailabilitySet"
     },
         "storageConfiguration": {
           "transportFileShareConfiguration": {
@@ -237,6 +237,6 @@
     "appResourceGroup": "PowerShell-CLI-TestRG"
   },
   "osSapConfiguration": {
-    "sapFqdn": "sapt99.steelcase.net"
+    "sapFqdn": "sap.contoso.net"
   }
 }
