@@ -4,7 +4,7 @@
   "infrastructureConfiguration": {
     "deploymentType": "ThreeTier",
     "highAvailabilityConfig": {
-      "highAvailabilityType": "AvailabilityZone"
+      "highAvailabilityType": "AvailabilitySet"
     },
         "storageConfiguration": {
           "transportFileShareConfiguration": {
