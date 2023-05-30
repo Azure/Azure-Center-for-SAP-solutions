@@ -4,7 +4,6 @@
 # Replace <filePath> to the input CSV file
 $file = Import-CSV "<filePath>"
 
-# Monitoring Interval in seconds
 $MonitoringIntervalInSeconds = 30
 
 $Jobdefs = @()
@@ -46,7 +45,7 @@ while($Completed.Count -ne ($Jobdefs | Measure-Object).Count)
 
     foreach($Jobdef in $Jobdefs)
     {
-        $Jobdef.JobName
+
         if($Completed.Contains($Jobdef.JobName))
         {
             continue
