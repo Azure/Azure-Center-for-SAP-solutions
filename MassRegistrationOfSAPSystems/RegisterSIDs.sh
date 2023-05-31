@@ -5,7 +5,7 @@
 #az account set --subscription "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
 # Replace <filePath> to the input CSV file path
-csvfile="C:/Users/jasksingh/Downloads/RegistrationData.csv"
+csvfile="<filePath>"
 
 results=''
 pids=''
