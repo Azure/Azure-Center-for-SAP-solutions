@@ -2,13 +2,16 @@
 #Connect-AzAccount -SubscriptionId 'yyyy-yyyy-yyyy-yyyy'
 
 # Replace <filePath> to the input CSV file
-$inputfile = "C:\Users\jasksingh\Downloads\RegistrationDataUpdated.csv"
+$inputfile = "<filePath>"
 
-$outputfile = "C:\Users\jasksingh\Downloads\RegistrationDataUpdated.csv"
+# Replace <filePath> to the output CSV file
+$outputfile = "<filePath>"
 
+# Specify the number of seconds to monitor the job status
 $MonitoringIntervalInSeconds = 30
 
-$MaxParallelJobs = 2
+# Specify the maximum number of parallel jobs to run
+$MaxParallelJobs = 10
 
 $Jobdefs = @()
 
@@ -29,6 +32,8 @@ foreach($line in $file)
     $TagVals = ($line.Tag -replace '\s','').Split(";")
     $Keys=@()
     $Values=@()
+
+    # Creating Tag Hash Table
     foreach($TagVal in $TagVals)
     {
         $SubTag = $TagVal.Split("=")
@@ -42,8 +47,6 @@ foreach($line in $file)
         $Tag += @{$Key=$Values[$i]}
         $i++
     }
-    Write-Host $TagString
-
     # Creating script block for parallel execution
     $ScriptBlockCopy = {
         param($ResourceGroup, $SID, $Location, $Environment, $Product, $CentralServerVmId, $ManagedRgName, $MsiID, $Tag, $ManagedRgStorageAccountName)
@@ -63,7 +66,7 @@ foreach($line in $file)
         else
         {
             Write-Host "Reached maximum parallel jobs, waiting for 30 seconds"
-            Start-Sleep -Seconds 30
+            Start-Sleep -Seconds $MonitoringIntervalInSeconds
         }
     }
 
@@ -111,7 +114,8 @@ while($Completed.Count -ne ($Jobdefs | Measure-Object).Count)
     }
 }
 
+# Outputting the results
 $Jobdefs | Format-Table -AutoSize
 
-# Replace <filePath> with the path of the output CSV file path 
+# Exporting the results to CSV
 $file | Export-Csv $outputfile -Force -NoTypeInformation

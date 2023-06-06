@@ -1,0 +1,2 @@
+SID,Location,Environment,Product,CentralServerVmId,MsiId,ManagedResourceGroupName,ManagedRgStorageAccountName,Tag,State
+TS4,eastus,NonProd,S4HANA,/subscriptions/49d64d54-e966-4c46-a868-1999802b762c/resourceGroups/jaskirat-rg/providers/Microsoft.Compute/virtualMachines/ts4vm,/subscriptions/49d64d54-e966-4c46-a868-1999802b762c/resourcegroups/JASKIRAT-RG/providers/Microsoft.ManagedIdentity/userAssignedIdentities/jaskirat-msi,mrg-TS4,acssstoragets4,k1 = v1; k2 = v2; k3 = v3; k4 = v4,Succeeded
