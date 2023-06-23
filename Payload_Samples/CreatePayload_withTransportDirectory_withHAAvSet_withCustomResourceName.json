@@ -6,11 +6,11 @@
     "highAvailabilityConfig": {
       "highAvailabilityType": "AvailabilitySet"
     },
-        "storageConfiguration": {
-          "transportFileShareConfiguration": {
-            "configurationType": "CreateAndMount"
-          }
-        },
+        "storageConfiguration": {
+          "transportFileShareConfiguration": {
+            "configurationType": "CreateAndMount"
+          }
+        },
     "centralServer": {
       "subnetId": "/subscriptions/49d64d54-e966-4c46-a868-1999802b762c/resourceGroups/SAP-E2ETest-rg/providers/Microsoft.Network/virtualNetworks/loop-test-vnet/subnets/loopsubnet",
       "virtualMachineConfiguration": {
