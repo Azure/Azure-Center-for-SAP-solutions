@@ -1,3 +1,9 @@
+# ---------------------------------------------------------------------------------- 
+    # Copyright (c) Microsoft Corporation. All rights reserved.
+    # Licensed under the MIT License. See License in the project root for
+    # license information.
+# ----------------------------------------------------------------------------------
+
 #Run the below commands before using the script
 #Connect-AzAccount -SubscriptionId 'yyyy-yyyy-yyyy-yyyy'
 
