@@ -1,4 +1,0 @@
-{
-    "configurationType": "Discovery",
-    "centralServerVmId": "/subscriptions/<subscription ID>/resourceGroups/<resource-group-name>/providers/Microsoft.Compute/virtualMachines/<VM name>"
-}
