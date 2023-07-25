@@ -1,6 +1,8 @@
 # Project
 
-Welcome to the Azure Center for SAP solutions github repository. You will find tools and solutions built using ACSS in this repo. 
+Welcome to the Azure Center for SAP solutions (ACSS) github repository. You will find SAP workload deployment and management tools and solutions built using ACSS in this repo. If you are new to ACSS, head to the [Azure Portal](https://aka.ms/ACSSPortal) and try it now!
+
+ACSS is [Generally Available](https://techcommunity.microsoft.com/t5/running-sap-applications-on-the/announcing-general-availability-for-microsoft-azure-center-for/ba-p/3818493) as of 15th May 2023. Documentation is available on [Microsoft docs](https://learn.microsoft.com/azure/sap/center-sap-solutions/overview).
 
 ## Contributing
 
