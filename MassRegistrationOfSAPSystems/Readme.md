@@ -1,6 +1,6 @@
 ## At scale registration of existing SAP systems running on Azure
 
-This example script enables you to register SAP systems at scale with Azure Center for SAP solutions. 
+The example script [RegisterSIDs.ps1](https://github.com/Azure/Azure-Center-for-SAP-solutions/blob/main/MassRegistrationOfSAPSystems/RegisterSIDs.ps1) enables you to register SAP systems at scale with Azure Center for SAP solutions. 
 
 Before getting started with registering systems, make sure to review the [pre-requisites](https://learn.microsoft.com/en-us/azure/sap/center-sap-solutions/register-existing-system#prerequisites) and [supported systems](https://learn.microsoft.com/en-us/azure/sap/center-sap-solutions/register-existing-system#supported-systems).
 
