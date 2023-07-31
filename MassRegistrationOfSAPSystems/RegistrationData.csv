@@ -1,0 +1,2 @@
+SID,Location,Environment,Product,CentralServerVmId,MsiId,ManagedResourceGroupName,ManagedRgStorageAccountName,Tag,State
+TST,eastus,NonProd,S4HANA,/subscriptions/<subscription>/resourceGroups/massreg/providers/Microsoft.Compute/virtualMachines/tstvm,/subscriptions/<subscription>/resourcegroups/JASKIRAT-RG/providers/Microsoft.ManagedIdentity/userAssignedIdentities/jaskirat-msi,mrg-TST,acssstoragetst,key1 = value1; key2 = value2; key3 = value3; key4 = value4,
