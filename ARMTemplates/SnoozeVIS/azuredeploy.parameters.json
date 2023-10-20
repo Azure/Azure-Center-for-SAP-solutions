@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": { "value": "" },
+    "LogicAppName": { "value": "" },
+    "OperationType": { "value": "" },
+    "IncludeDatabaseOperations": { "value": "" },
+    "IncludeVirtualMachineOperation": { "value": "" },
+    "OperationExecution": { "value": "" },
+    "SoftStopTimeout": { "value": "" },
+    "VirtualInstanceForSAPSolutionsResourceID": { "value": [] },
+    "Frequency": { "value": "" },
+    "Interval": { "value": "" },
+    "OnTheseDays": { "value": [] },
+    "StartTime": { "value": "" },
+    "TimeZone": { "value": "" },
+    "ManagedIdentityId": { "value": "" }
+  }
+}

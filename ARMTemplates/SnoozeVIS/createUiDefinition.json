@@ -1,0 +1,835 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+    "handler": "Microsoft.Azure.CreateUIDef",
+    "version": "0.1.2-preview",
+    "parameters": {
+      "basics": [],
+      "steps": [
+        {
+          "name": "operationConfiguration",
+          "label": "Configure operation",
+          "bladeTitle": "Configure Operation",
+          "elements": [
+            {
+              "name": "LogicAppName",
+              "type": "Microsoft.Common.TextBox",
+              "label": "Logic app name",
+              "placeholder": "Enter logic app name",
+              "toolTip": "The name of the logic app that creates start/stop schedule.",
+              "constraints": {
+                "required": true
+              }
+            },
+            {
+              "name": "ManagedIdentityId",
+              "type": "Microsoft.Common.TextBox",
+              "placeholder": "Resource ID of user assigned managed identity",
+              "label": "User assigned managed identity",
+              "toolTip": "Add user assigned identities to grant the resource access to other existing resources.",
+              "constraints": {
+                "required": true
+              }
+            },
+            {
+              "name": "SAPOperationType",
+              "type": "Microsoft.Common.DropDown",
+              "label": "SAP operation type",
+              "toolTip": "Operation to be performed on SAP resource.",
+              "defaultValue": [],
+              "constraints": {
+                "allowedValues": [
+                  {
+                    "label": "Start",
+                    "description": "Start the application tier of SAP system, including underlying infrastructure.",
+                    "value": "start"
+                  },
+                  {
+                    "label": "Stop",
+                    "description": "Stop the application tier of SAP system, including underlying infrastructure.",
+                    "value": "stop"
+                  }
+                ],
+                "required": true
+              }
+            },
+            {
+              "name": "IncludeDatabaseOperations",
+              "type": "Microsoft.Common.OptionsGroup",
+              "label": "Include database operations",
+              "toolTip": "Start/Stop the Database Instance.",
+              "defaultValue": "No",
+              "constraints": {
+                "allowedValues": [
+                  {
+                    "label": "Yes",
+                    "value": "true"
+                  },
+                  {
+                    "label": "No",
+                    "value": "false"
+                  }
+                ],
+                "required": true
+              }
+            },
+            {
+              "name": "IncludeVirtualMachineOperation",
+              "type": "Microsoft.Common.OptionsGroup",
+              "label": "Include vitual machine operations",
+              "toolTip": "Start/Stop the Vitual Machine.",
+              "defaultValue": "No",
+              "visible": true,
+              "constraints": {
+                "allowedValues": [
+                  {
+                    "label": "Yes",
+                    "value": "true"
+                  },
+                  {
+                    "label": "No",
+                    "value": "false"
+                  }
+                ],
+                "required": true
+              }
+            },
+            {
+              "name": "OperationExecution",
+              "type": "Microsoft.Common.OptionsGroup",
+              "label": "Operation execution",
+              "toolTip": "Perform operations in a sequence/concurrent.",
+              "defaultValue": "Concuurrent",
+              "constraints": {
+                "allowedValues": [
+                  {
+                    "label": "Sequenced (one after another)",
+                    "value": "sequence"
+                  },
+                  {
+                    "label": "Concuurrent",
+                    "value": "concurrent"
+                  }
+                ],
+                "required": true
+              }
+            },
+            {
+              "name": "SoftStopTimeout",
+              "type": "Microsoft.Common.TextBox",
+              "label": "Soft stop timeout",
+              "toolTip": "Soft stop timeout value, if this value is 0, hard stop will be triggered.",
+              "visible": "[equals(steps('operationConfiguration').SAPOperationType, 'stop')]",
+              "defaultValue": "0",
+              "constraints": {
+                "required": false,
+                "validations": [
+                  {
+                    "regex": "^[0-9]{1,30}$",
+                    "message": "Only numeric characters are allowed."
+                  }
+                ]
+              }
+            },
+            {
+              "name": "VirtualInstanceForSAPSolutionsResourceID",
+              "type": "Microsoft.Common.TextBox",
+              "label": "Virtual instance for SAP solutions resource ID(s)",
+              "placeholder": "List of VIS Resource IDs",
+              "toolTip": "List of Virtual Instance for SAP solutions Resource ID(s)",
+              "constraints": {
+                "required": true,
+                "validations": [
+                  {
+                    "isValid": "[startsWith(steps('operationConfiguration').VirtualInstanceForSAPSolutionsResourceID, '[')]",
+                    "message": "Starts with [, ends with ]"
+                  },
+                  {
+                    "isValid": "[endsWith(steps('operationConfiguration').VirtualInstanceForSAPSolutionsResourceID, ']')]",
+                    "message": "Starts with [, ends with ]"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "scheduleDetails",
+          "label": "Schedule details",
+          "bladeTitle": "Schedule details",
+          "elements": [
+            {
+              "name": "Frequency",
+              "type": "Microsoft.Common.DropDown",
+              "label": "Frequency",
+              "toolTip": "How often should schedule run. i.e. Weekly.",
+              "constraints": {
+                "allowedValues": [
+                  {
+                    "label": "Month",
+                    "value": "Month"
+                  },
+                  {
+                    "label": "Week",
+                    "value": "Week"
+                  },
+                  {
+                    "label": "Day",
+                    "value": "Day"
+                  }
+                ],
+                "required": true
+              }
+            },
+            {
+              "name": "Interval",
+              "type": "Microsoft.Common.TextBox",
+              "defaultValue": "1",
+              "label": "Interval",
+              "constraints": {
+                "required": true
+              }
+            },
+            {
+              "name": "OnTheseDays",
+              "type": "Microsoft.Common.DropDown",
+              "label": "On these days",
+              "toolTip": "Remove the days in a week you want to skip the opeartion.",
+              "multiselect": true,
+              "visible": "[equals(steps('scheduleDetails').Frequency, 'Week')]",
+              "defaultValue": [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday"
+              ],
+              "constraints": {
+                "allowedValues": [
+                  {
+                    "label": "Monday",
+                    "value": "Monday"
+                  },
+                  {
+                    "label": "Tuesday",
+                    "value": "Tuesday"
+                  },
+                  {
+                    "label": "Wednesday",
+                    "value": "Wednesday"
+                  },
+                  {
+                    "label": "Thursday",
+                    "value": "Thursday"
+                  },
+                  {
+                    "label": "Friday",
+                    "value": "Friday"
+                  },
+                  {
+                    "label": "Saturday",
+                    "value": "Saturday"
+                  },
+                  {
+                    "label": "Sunday",
+                    "value": "Sunday"
+                  }
+                ],
+                "required": false
+              }
+            },
+            {
+              "name": "AtTheseHours",
+              "type": "Microsoft.Common.DropDown",
+              "label": "At these hours",
+              "multiselect": true,
+              "toolTip": "Enter the hour at which to perform operation.",
+              "visible": "[or(equals(steps('scheduleDetails').Frequency, 'Week'), equals(steps('scheduleDetails').Frequency, 'Day'))]",
+              "defaultValue": [],
+              "constraints": {
+                "allowedValues": [
+                  { "label": "1", "value": 1 },
+                  { "label": "2", "value": 2 },
+                  { "label": "3", "value": 3 },
+                  { "label": "4", "value": 4 },
+                  { "label": "5", "value": 5 },
+                  { "label": "6", "value": 6 },
+                  { "label": "7", "value": 7 },
+                  { "label": "8", "value": 8 },
+                  { "label": "9", "value": 9 },
+                  { "label": "10", "value": 10 },
+                  { "label": "11", "value": 11 },
+                  { "label": "12", "value": 12 },
+                  { "label": "13", "value": 13 },
+                  { "label": "14", "value": 14 },
+                  { "label": "15", "value": 15 },
+                  { "label": "16", "value": 16 },
+                  { "label": "17", "value": 17 },
+                  { "label": "18", "value": 18 },
+                  { "label": "19", "value": 19 },
+                  { "label": "20", "value": 20 },
+                  { "label": "21", "value": 21 },
+                  { "label": "22", "value": 22 },
+                  { "label": "23", "value": 23 },
+                  { "label": "24", "value": 24 }
+                ]
+              }
+            },
+            {
+              "name": "AtThisMinute",
+              "type": "Microsoft.Common.TextBox",
+              "label": "At this minute",
+              "toolTip": "Enter the minute at which to perform operation.",
+              "visible": "[or(equals(steps('scheduleDetails').Frequency, 'Week'), equals(steps('scheduleDetails').Frequency, 'Day'))]",
+              "constraints": {
+                "validations": [
+                  {
+                    "regex": "^[0-5]?[0-9]$",
+                    "message": "Only value between 0-60 allowed."
+                  }
+                ]
+              }
+            },
+            {
+              "name": "StartTime",
+              "type": "Microsoft.Common.TextBox",
+              "label": "Start time",
+              "defaultValue": "[utcNow()]",
+              "toolTip": "Select start time to Power On SAP system.",
+              "constraints": {
+                "required": true
+              }
+            },
+            {
+              "name": "TimeZone",
+              "type": "Microsoft.Common.DropDown",
+              "label": "Time zone",
+              "toolTip": "Start VM at this specific time zone.",
+              "defaultValue": "UTC",
+              "filter": true,
+              "constraints": {
+                "required": true,
+                "allowedValues": [
+                  {
+                    "label": "Dateline Standard Time",
+                    "value": "Dateline Standard Time"
+                  },
+                  { "label": "UTC-11", "value": "UTC-11" },
+                  {
+                    "label": "Aleutian Standard Time",
+                    "value": "Aleutian Standard Time"
+                  },
+                  {
+                    "label": "Hawaiian Standard Time",
+                    "value": "Hawaiian Standard Time"
+                  },
+                  {
+                    "label": "Marquesas Standard Time",
+                    "value": "Marquesas Standard Time"
+                  },
+                  {
+                    "label": "Alaskan Standard Time",
+                    "value": "Alaskan Standard Time"
+                  },
+                  { "label": "UTC-09", "value": "UTC-09" },
+                  {
+                    "label": "Pacific Standard Time (Mexico)",
+                    "value": "Pacific Standard Time (Mexico)"
+                  },
+                  { "label": "UTC-08", "value": "UTC-08" },
+                  {
+                    "label": "Pacific Standard Time",
+                    "value": "Pacific Standard Time"
+                  },
+                  {
+                    "label": "US Mountain Standard Time",
+                    "value": "US Mountain Standard Time"
+                  },
+                  {
+                    "label": "Mountain Standard Time (Mexico)",
+                    "value": "Mountain Standard Time (Mexico)"
+                  },
+                  {
+                    "label": "Mountain Standard Time",
+                    "value": "Mountain Standard Time"
+                  },
+                  {
+                    "label": "Central America Standard Time",
+                    "value": "Central America Standard Time"
+                  },
+                  {
+                    "label": "Central Standard Time",
+                    "value": "Central Standard Time"
+                  },
+                  {
+                    "label": "Easter Island Standard Time",
+                    "value": "Easter Island Standard Time"
+                  },
+                  {
+                    "label": "Central Standard Time (Mexico)",
+                    "value": "Central Standard Time (Mexico)"
+                  },
+                  {
+                    "label": "Canada Central Standard Time",
+                    "value": "Canada Central Standard Time"
+                  },
+                  {
+                    "label": "SA Pacific Standard Time",
+                    "value": "SA Pacific Standard Time"
+                  },
+                  {
+                    "label": "Eastern Standard Time (Mexico)",
+                    "value": "Eastern Standard Time (Mexico)"
+                  },
+                  {
+                    "label": "Eastern Standard Time",
+                    "value": "Eastern Standard Time"
+                  },
+                  {
+                    "label": "Haiti Standard Time",
+                    "value": "Haiti Standard Time"
+                  },
+                  {
+                    "label": "Cuba Standard Time",
+                    "value": "Cuba Standard Time"
+                  },
+                  {
+                    "label": "US Eastern Standard Time",
+                    "value": "US Eastern Standard Time"
+                  },
+                  {
+                    "label": "Paraguay Standard Time",
+                    "value": "Paraguay Standard Time"
+                  },
+                  {
+                    "label": "Atlantic Standard Time",
+                    "value": "Atlantic Standard Time"
+                  },
+                  {
+                    "label": "Venezuela Standard Time",
+                    "value": "Venezuela Standard Time"
+                  },
+                  {
+                    "label": "Central Brazilian Standard Time",
+                    "value": "Central Brazilian Standard Time"
+                  },
+                  {
+                    "label": "SA Western Standard Time",
+                    "value": "SA Western Standard Time"
+                  },
+                  {
+                    "label": "Pacific SA Standard Time",
+                    "value": "Pacific SA Standard Time"
+                  },
+                  {
+                    "label": "Turks And Caicos Standard Time",
+                    "value": "Turks And Caicos Standard Time"
+                  },
+                  {
+                    "label": "Newfoundland Standard Time",
+                    "value": "Newfoundland Standard Time"
+                  },
+                  {
+                    "label": "Tocantins Standard Time",
+                    "value": "Tocantins Standard Time"
+                  },
+                  {
+                    "label": "E. South America Standard Time",
+                    "value": "E. South America Standard Time"
+                  },
+                  {
+                    "label": "SA Eastern Standard Time",
+                    "value": "SA Eastern Standard Time"
+                  },
+                  {
+                    "label": "Argentina Standard Time",
+                    "value": "Argentina Standard Time"
+                  },
+                  {
+                    "label": "Greenland Standard Time",
+                    "value": "Greenland Standard Time"
+                  },
+                  {
+                    "label": "Montevideo Standard Time",
+                    "value": "Montevideo Standard Time"
+                  },
+                  {
+                    "label": "Saint Pierre Standard Time",
+                    "value": "Saint Pierre Standard Time"
+                  },
+                  {
+                    "label": "Bahia Standard Time",
+                    "value": "Bahia Standard Time"
+                  },
+                  { "label": "UTC-02", "value": "UTC-02" },
+                  {
+                    "label": "Mid-Atlantic Standard Time",
+                    "value": "Mid-Atlantic Standard Time"
+                  },
+                  {
+                    "label": "Azores Standard Time",
+                    "value": "Azores Standard Time"
+                  },
+                  {
+                    "label": "Cape Verde Standard Time",
+                    "value": "Cape Verde Standard Time"
+                  },
+                  { "label": "UTC", "value": "UTC" },
+                  {
+                    "label": "Morocco Standard Time",
+                    "value": "Morocco Standard Time"
+                  },
+                  { "label": "GMT Standard Time", "value": "GMT Standard Time" },
+                  {
+                    "label": "Greenwich Standard Time",
+                    "value": "Greenwich Standard Time"
+                  },
+                  {
+                    "label": "W. Europe Standard Time",
+                    "value": "W. Europe Standard Time"
+                  },
+                  {
+                    "label": "Central Europe Standard Time",
+                    "value": "Central Europe Standard Time"
+                  },
+                  {
+                    "label": "Romance Standard Time",
+                    "value": "Romance Standard Time"
+                  },
+                  {
+                    "label": "Central European Standard Time",
+                    "value": "Central European Standard Time"
+                  },
+                  {
+                    "label": "W. Central Africa Standard Time",
+                    "value": "W. Central Africa Standard Time"
+                  },
+                  {
+                    "label": "Namibia Standard Time",
+                    "value": "Namibia Standard Time"
+                  },
+                  {
+                    "label": "Jordan Standard Time",
+                    "value": "Jordan Standard Time"
+                  },
+                  { "label": "GTB Standard Time", "value": "GTB Standard Time" },
+                  {
+                    "label": "Middle East Standard Time",
+                    "value": "Middle East Standard Time"
+                  },
+                  {
+                    "label": "Egypt Standard Time",
+                    "value": "Egypt Standard Time"
+                  },
+                  {
+                    "label": "E. Europe Standard Time",
+                    "value": "E. Europe Standard Time"
+                  },
+                  {
+                    "label": "Syria Standard Time",
+                    "value": "Syria Standard Time"
+                  },
+                  {
+                    "label": "West Bank Standard Time",
+                    "value": "West Bank Standard Time"
+                  },
+                  {
+                    "label": "South Africa Standard Time",
+                    "value": "South Africa Standard Time"
+                  },
+                  { "label": "FLE Standard Time", "value": "FLE Standard Time" },
+                  {
+                    "label": "Turkey Standard Time",
+                    "value": "Turkey Standard Time"
+                  },
+                  {
+                    "label": "Israel Standard Time",
+                    "value": "Israel Standard Time"
+                  },
+                  {
+                    "label": "Kaliningrad Standard Time",
+                    "value": "Kaliningrad Standard Time"
+                  },
+                  {
+                    "label": "Libya Standard Time",
+                    "value": "Libya Standard Time"
+                  },
+                  {
+                    "label": "Arabic Standard Time",
+                    "value": "Arabic Standard Time"
+                  },
+                  {
+                    "label": "Arab Standard Time",
+                    "value": "Arab Standard Time"
+                  },
+                  {
+                    "label": "Belarus Standard Time",
+                    "value": "Belarus Standard Time"
+                  },
+                  {
+                    "label": "Russian Standard Time",
+                    "value": "Russian Standard Time"
+                  },
+                  {
+                    "label": "E. Africa Standard Time",
+                    "value": "E. Africa Standard Time"
+                  },
+                  {
+                    "label": "Iran Standard Time",
+                    "value": "Iran Standard Time"
+                  },
+                  {
+                    "label": "Arabian Standard Time",
+                    "value": "Arabian Standard Time"
+                  },
+                  {
+                    "label": "Astrakhan Standard Time",
+                    "value": "Astrakhan Standard Time"
+                  },
+                  {
+                    "label": "Azerbaijan Standard Time",
+                    "value": "Azerbaijan Standard Time"
+                  },
+                  {
+                    "label": "Russia Time Zone 3",
+                    "value": "Russia Time Zone 3"
+                  },
+                  {
+                    "label": "Mauritius Standard Time",
+                    "value": "Mauritius Standard Time"
+                  },
+                  {
+                    "label": "Georgian Standard Time",
+                    "value": "Georgian Standard Time"
+                  },
+                  {
+                    "label": "Caucasus Standard Time",
+                    "value": "Caucasus Standard Time"
+                  },
+                  {
+                    "label": "Afghanistan Standard Time",
+                    "value": "Afghanistan Standard Time"
+                  },
+                  {
+                    "label": "West Asia Standard Time",
+                    "value": "West Asia Standard Time"
+                  },
+                  {
+                    "label": "Ekaterinburg Standard Time",
+                    "value": "Ekaterinburg Standard Time"
+                  },
+                  {
+                    "label": "Pakistan Standard Time",
+                    "value": "Pakistan Standard Time"
+                  },
+                  {
+                    "label": "India Standard Time",
+                    "value": "India Standard Time"
+                  },
+                  {
+                    "label": "Sri Lanka Standard Time",
+                    "value": "Sri Lanka Standard Time"
+                  },
+                  {
+                    "label": "Nepal Standard Time",
+                    "value": "Nepal Standard Time"
+                  },
+                  {
+                    "label": "Central Asia Standard Time",
+                    "value": "Central Asia Standard Time"
+                  },
+                  {
+                    "label": "Bangladesh Standard Time",
+                    "value": "Bangladesh Standard Time"
+                  },
+                  {
+                    "label": "N. Central Asia Standard Time",
+                    "value": "N. Central Asia Standard Time"
+                  },
+                  {
+                    "label": "Myanmar Standard Time",
+                    "value": "Myanmar Standard Time"
+                  },
+                  {
+                    "label": "SE Asia Standard Time",
+                    "value": "SE Asia Standard Time"
+                  },
+                  {
+                    "label": "Altai Standard Time",
+                    "value": "Altai Standard Time"
+                  },
+                  {
+                    "label": "W. Mongolia Standard Time",
+                    "value": "W. Mongolia Standard Time"
+                  },
+                  {
+                    "label": "North Asia Standard Time",
+                    "value": "North Asia Standard Time"
+                  },
+                  {
+                    "label": "Tomsk Standard Time",
+                    "value": "Tomsk Standard Time"
+                  },
+                  {
+                    "label": "China Standard Time",
+                    "value": "China Standard Time"
+                  },
+                  {
+                    "label": "North Asia East Standard Time",
+                    "value": "North Asia East Standard Time"
+                  },
+                  {
+                    "label": "Singapore Standard Time",
+                    "value": "Singapore Standard Time"
+                  },
+                  {
+                    "label": "W. Australia Standard Time",
+                    "value": "W. Australia Standard Time"
+                  },
+                  {
+                    "label": "Taipei Standard Time",
+                    "value": "Taipei Standard Time"
+                  },
+                  {
+                    "label": "Ulaanbaatar Standard Time",
+                    "value": "Ulaanbaatar Standard Time"
+                  },
+                  {
+                    "label": "North Korea Standard Time",
+                    "value": "North Korea Standard Time"
+                  },
+                  {
+                    "label": "Aus Central W. Standard Time",
+                    "value": "Aus Central W. Standard Time"
+                  },
+                  {
+                    "label": "Transbaikal Standard Time",
+                    "value": "Transbaikal Standard Time"
+                  },
+                  {
+                    "label": "Tokyo Standard Time",
+                    "value": "Tokyo Standard Time"
+                  },
+                  {
+                    "label": "Korea Standard Time",
+                    "value": "Korea Standard Time"
+                  },
+                  {
+                    "label": "Yakutsk Standard Time",
+                    "value": "Yakutsk Standard Time"
+                  },
+                  {
+                    "label": "Cen. Australia Standard Time",
+                    "value": "Cen. Australia Standard Time"
+                  },
+                  {
+                    "label": "AUS Central Standard Time",
+                    "value": "AUS Central Standard Time"
+                  },
+                  {
+                    "label": "E. Australia Standard Time",
+                    "value": "E. Australia Standard Time"
+                  },
+                  {
+                    "label": "AUS Eastern Standard Time",
+                    "value": "AUS Eastern Standard Time"
+                  },
+                  {
+                    "label": "West Pacific Standard Time",
+                    "value": "West Pacific Standard Time"
+                  },
+                  {
+                    "label": "Tasmania Standard Time",
+                    "value": "Tasmania Standard Time"
+                  },
+                  {
+                    "label": "Vladivostok Standard Time",
+                    "value": "Vladivostok Standard Time"
+                  },
+                  {
+                    "label": "Lord Howe Standard Time",
+                    "value": "Lord Howe Standard Time"
+                  },
+                  {
+                    "label": "Bougainville Standard Time",
+                    "value": "Bougainville Standard Time"
+                  },
+                  {
+                    "label": "Russia Time Zone 10",
+                    "value": "Russia Time Zone 10"
+                  },
+                  {
+                    "label": "Magadan Standard Time",
+                    "value": "Magadan Standard Time"
+                  },
+                  {
+                    "label": "Norfolk Standard Time",
+                    "value": "Norfolk Standard Time"
+                  },
+                  {
+                    "label": "Sakhalin Standard Time",
+                    "value": "Sakhalin Standard Time"
+                  },
+                  {
+                    "label": "Central Pacific Standard Time",
+                    "value": "Central Pacific Standard Time"
+                  },
+                  {
+                    "label": "Russia Time Zone 11",
+                    "value": "Russia Time Zone 11"
+                  },
+                  {
+                    "label": "New Zealand Standard Time",
+                    "value": "New Zealand Standard Time"
+                  },
+                  { "label": "UTC+12", "value": "UTC+12" },
+                  {
+                    "label": "Fiji Standard Time",
+                    "value": "Fiji Standard Time"
+                  },
+                  {
+                    "label": "Kamchatka Standard Time",
+                    "value": "Kamchatka Standard Time"
+                  },
+                  {
+                    "label": "Chatham Islands Standard Time",
+                    "value": "Chatham Islands Standard Time"
+                  },
+                  {
+                    "label": "Tonga Standard Time",
+                    "value": "Tonga Standard Time"
+                  },
+                  {
+                    "label": "Samoa Standard Time",
+                    "value": "Samoa Standard Time"
+                  },
+                  {
+                    "label": "Line Islands Standard Time",
+                    "value": "Line Islands Standard Time"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "outputs": {
+        "LogicAppName": "[steps('operationConfiguration').LogicAppName]",
+        "location": "[location()]",
+        "ManagedIdentityId": "[steps('operationConfiguration').ManagedIdentityId]",
+        "SAPOperationType": "[steps('operationConfiguration').SAPOperationType]",
+        "IncludeDatabaseOperations": "[steps('operationConfiguration').IncludeDatabaseOperations]",
+        "IncludeVirtualMachineOperation": "[steps('operationConfiguration').IncludeVirtualMachineOperation]",
+        "OperationExecution": "[steps('operationConfiguration').OperationExecution]",
+        "SoftStopTimeout": "[steps('operationConfiguration').SoftStopTimeout]",
+        "VirtualInstanceForSAPSolutionsResourceID": "[steps('operationConfiguration').VirtualInstanceForSAPSolutionsResourceID]",
+        "Frequency": "[steps('scheduleDetails').Frequency]",
+        "OnTheseDays": "[steps('scheduleDetails').OnTheseDays]",
+        "Interval": "[steps('scheduleDetails').Interval]",
+        "StartTime": "[steps('scheduleDetails').StartTime]",
+        "TimeZone": "[steps('scheduleDetails').TimeZone]"
+      }
+    }
+  }
+  
