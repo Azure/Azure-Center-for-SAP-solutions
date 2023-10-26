@@ -55,7 +55,7 @@
       "defaultValue": 0,
       "metadata": {
         "required": false,
-        "displayName": "Soft stop timeout",
+        "displayName": "Soft stop timeout (in seconds)",
         "description": "Soft stop timeout value, if this value is 0, hard stop will be triggered"
       }
     },
@@ -103,7 +103,7 @@
       "metadata": {
         "description": "Select time zone for task schedule",
         "displayName": "Time zone",
-        "placeholder": "Start VM at this specific time zone",
+        "placeholder": "Select time zone for task schedule",
         "required": true
       }
     },
