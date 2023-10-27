@@ -15,7 +15,7 @@
             "type": "Microsoft.Common.TextBox",
             "label": "Logic app name",
             "placeholder": "Enter logic app name",
-            "toolTip": "The name of the logic app that creates start/stop schedule.",
+            "toolTip": "The name of the logic app that is deployed for scheduling start or stop of Virtual Instance for SAP solutions (VIS) resources.",
             "constraints": {
               "required": true
             }
@@ -25,107 +25,13 @@
             "type": "Microsoft.Common.TextBox",
             "placeholder": "Resource ID of user assigned managed identity",
             "label": "User assigned managed identity",
-            "toolTip": "Add user assigned identities to grant the resource access to other existing resources.",
+            "toolTip": "Enter a user assigned managed identity that will be associated with the logic app to trigger the start and stop of VIS resources.",
             "constraints": {
-              "required": true
-            }
-          },
-          {
-            "name": "SAPOperationType",
-            "type": "Microsoft.Common.DropDown",
-            "label": "SAP operation type",
-            "toolTip": "Operation to be performed on SAP resource.",
-            "defaultValue": [],
-            "constraints": {
-              "allowedValues": [
-                {
-                  "label": "Start",
-                  "description": "Start the application tier of SAP system, including underlying infrastructure.",
-                  "value": "start"
-                },
-                {
-                  "label": "Stop",
-                  "description": "Stop the application tier of SAP system, including underlying infrastructure.",
-                  "value": "stop"
-                }
-              ],
-              "required": true
-            }
-          },
-          {
-            "name": "IncludeDatabaseOperations",
-            "type": "Microsoft.Common.OptionsGroup",
-            "label": "Include database operations",
-            "toolTip": "Start/Stop the Database Instance.",
-            "defaultValue": "No",
-            "constraints": {
-              "allowedValues": [
-                {
-                  "label": "Yes",
-                  "value": "true"
-                },
-                {
-                  "label": "No",
-                  "value": "false"
-                }
-              ],
-              "required": true
-            }
-          },
-          {
-            "name": "IncludeVirtualMachineOperation",
-            "type": "Microsoft.Common.OptionsGroup",
-            "label": "Include vitual machine operations",
-            "toolTip": "Start/Stop the Vitual Machine.",
-            "defaultValue": "No",
-            "visible": true,
-            "constraints": {
-              "allowedValues": [
-                {
-                  "label": "Yes",
-                  "value": "true"
-                },
-                {
-                  "label": "No",
-                  "value": "false"
-                }
-              ],
-              "required": true
-            }
-          },
-          {
-            "name": "OperationExecution",
-            "type": "Microsoft.Common.OptionsGroup",
-            "label": "Operation execution",
-            "toolTip": "Perform operations in a sequence/concurrent.",
-            "defaultValue": "Concuurrent",
-            "constraints": {
-              "allowedValues": [
-                {
-                  "label": "Sequenced (one after another)",
-                  "value": "sequence"
-                },
-                {
-                  "label": "Concuurrent",
-                  "value": "concurrent"
-                }
-              ],
-              "required": true
-            }
-          },
-          {
-            "name": "SoftStopTimeout",
-            "type": "Microsoft.Common.TextBox",
-            "label": "Soft stop timeout (in seconds)",
-            "toolTip": "Soft stop timeout value, if this value is 0, hard stop will be triggered.",
-            "visible": "[equals(steps('operationConfiguration').SAPOperationType, 'stop')]",
-            "defaultValue": "0",
-            "constraints": {
-              "required": false,
+              "required": true,
               "validations": [
                 {
-                  "regex": "^[0-9]{1,30}$",
-                  "message": "Only numeric characters are allowed."
+                  "regex": "^\/subscriptions\/[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12}\/resourcegroups\/[a-zA-Z0-9._()\\-\\[\\]]+\/providers\/microsoft.managedidentity\/userassignedidentities\/[a-zA-Z0-9._()\\-\\[\\]]+$",
+                  "message": "Invalid resource ID."
                 }
               ]
             }
@@ -149,6 +55,106 @@
                 }
               ]
             }
+          },
+          {
+            "name": "SAPOperationType",
+            "type": "Microsoft.Common.DropDown",
+            "label": "SAP operation type",
+            "toolTip": "Select the operation to be performed on the VIS resources.",
+            "defaultValue": [],
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "Start",
+                  "description": "Start the application tier of SAP system, including underlying infrastructure.",
+                  "value": "start"
+                },
+                {
+                  "label": "Stop",
+                  "description": "Stop the application tier of SAP system, including underlying infrastructure.",
+                  "value": "stop"
+                }
+              ],
+              "required": true
+            }
+          },
+          {
+            "name": "IncludeDatabaseOperations",
+            "type": "Microsoft.Common.OptionsGroup",
+            "label": "Include database operations",
+            "toolTip": "Choose if you want the database instance of the VIS to be started or stopped as part of the schedule.",
+            "defaultValue": "No",
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "Yes",
+                  "value": "true"
+                },
+                {
+                  "label": "No",
+                  "value": "false"
+                }
+              ],
+              "required": true
+            }
+          },
+          {
+            "name": "IncludeVirtualMachineOperation",
+            "type": "Microsoft.Common.OptionsGroup",
+            "label": "Include vitual machine operations",
+            "toolTip": "Choose if you want the underlying VMs for the VIS to be started or stopped as part of the schedule. If you select No, only SAP application and/or database instance is stopped and started without any impact to underlying VMs.",
+            "defaultValue": "No",
+            "visible": true,
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "Yes",
+                  "value": "true"
+                },
+                {
+                  "label": "No",
+                  "value": "false"
+                }
+              ],
+              "required": true
+            }
+          },
+          {
+            "name": "OperationExecution",
+            "type": "Microsoft.Common.OptionsGroup",
+            "label": "Operation execution",
+            "toolTip": "Choose if you want the selected VIS resources (SIDs) to be stopped in a sequence or concurrently.",
+            "defaultValue": "Concurrent",
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "Sequenced (one after another)",
+                  "value": "sequence"
+                },
+                {
+                  "label": "Concurrent",
+                  "value": "concurrent"
+                }
+              ],
+              "required": true
+            }
+          },
+          {
+            "name": "SoftStopTimeout",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Soft stop timeout (in seconds)",
+            "toolTip": "Enter soft stop timeout if you want to initiate soft stop for the VIS and Database instance. Note that the same timeout value is used for both VIS and DB instance.",
+            "visible": "[equals(steps('operationConfiguration').SAPOperationType, 'stop')]",
+            "defaultValue": "0",
+            "constraints": {
+              "required": false,
+              "validations": [
+                {
+                  "regex": "^[0-9]{1,30}$",
+                  "message": "Only numeric characters are allowed."
+                }
+              ]
+            }
           }
         ]
       },
@@ -161,7 +167,7 @@
             "name": "Frequency",
             "type": "Microsoft.Common.DropDown",
             "label": "Frequency",
-            "toolTip": "How often should schedule run. i.e. Weekly.",
+            "toolTip": "Select the frequency at which you want the operation to be triggered, for example Daily, Weekly.",
             "constraints": {
               "allowedValues": [
                 {
@@ -185,6 +191,7 @@
             "type": "Microsoft.Common.TextBox",
             "defaultValue": "1",
             "label": "Interval",
+            "toolTip": "A positive integer that describes how often the workflow runs based on the frequency.",
             "constraints": {
               "required": true
             }
@@ -193,7 +200,7 @@
             "name": "OnTheseDays",
             "type": "Microsoft.Common.DropDown",
             "label": "On these days",
-            "toolTip": "Remove the days in a week you want to skip the opeartion.",
+            "toolTip": "If you select 'Weekly', you can select one or more days when you want to run the workflow.",
             "multiselect": true,
             "visible": "[equals(steps('scheduleDetails').Frequency, 'Week')]",
             "defaultValue": [
@@ -244,7 +251,7 @@
             "type": "Microsoft.Common.DropDown",
             "label": "At these hours",
             "multiselect": true,
-            "toolTip": "Enter the hour at which to perform operation.",
+            "toolTip": "If you select 'Day' or 'Week', you can select one or more integers from 0 to 23 as the hours of the day for when you want to run the workflow. For example, if you specify '10', '12' and '14', you get 10 AM, 12 PM, and 2 PM for the hours of the day.",
             "visible": "[or(equals(steps('scheduleDetails').Frequency, 'Week'), equals(steps('scheduleDetails').Frequency, 'Day'))]",
             "defaultValue": [],
             "constraints": {
@@ -280,7 +287,7 @@
             "name": "AtThisMinute",
             "type": "Microsoft.Common.TextBox",
             "label": "At this minute",
-            "toolTip": "Enter the minute at which to perform operation.",
+            "toolTip": "If you select 'Day' or 'Week', you can select one or more integers from 0 to 59 as the minutes of the hour when you want to run the workflow.",
             "visible": "[or(equals(steps('scheduleDetails').Frequency, 'Week'), equals(steps('scheduleDetails').Frequency, 'Day'))]",
             "constraints": {
               "validations": [
@@ -295,7 +302,7 @@
             "name": "TimeZone",
             "type": "Microsoft.Common.DropDown",
             "label": "Time zone",
-            "toolTip": "Select time zone for task schedule.",
+            "toolTip": "Select the time zone that you want to apply.",
             "defaultValue": "UTC",
             "filter": true,
             "constraints": {
@@ -806,7 +813,7 @@
             "type": "Microsoft.Common.TextBox",
             "label": "Start time",
             "defaultValue": "[utcNow()]",
-            "toolTip": "Select start time to Power On SAP system.",
+            "toolTip": "Provide a start date and time in the format YYYY-MM-DDThh:mm:ss.fff if you select a time zone other than UTC and YYYY-MM-DDThh:mm:ss.fffZ if you select UTC time zone.",
             "constraints": {
               "required": true,
               "validations": [

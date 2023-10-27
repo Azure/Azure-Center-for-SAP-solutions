@@ -117,10 +117,10 @@
     }
   },
   "variables": {
-    "armConnectionName": "[concat('snooze-arm-',uniqueString(deployment().name))]",
+    "armConnectionName": "[concat('sapops-arm-',uniqueString(deployment().name))]",
     "logicAppAlertName": "[toLower( concat( parameters('LogicAppName'), '-logicappalert-', uniqueString(deployment().name) ) )]",
-    "actionGroupName": "[toLower( concat( 'snooze-actiongroup-', uniqueString(deployment().name) ) )]",
-    "visAlertName": "[toLower( concat( 'snooze-visalert-', uniqueString(deployment().name) ) )]",
+    "actionGroupName": "[toLower( concat( 'sapops-', uniqueString(deployment().name) ) )]",
+    "visAlertName": "[toLower( concat( 'sapops-visalert-', uniqueString(deployment().name) ) )]",
     "weekly": {
       "Recurrence": {
         "recurrence": {
@@ -708,8 +708,16 @@
               "equals": "Administrative"
             },
             {
+              "field": "status",
+              "containsAny": ["failed", "succeeded"]
+            },
+            {
               "field": "operationName",
               "equals": "[concat('Microsoft.Workloads/sapVirtualInstances/', parameters('SAPOperationType'), '/action')]"
+            },
+            {
+              "field": "caller",
+              "equals": "[reference(parameters('ManagedIdentityId'), '2023-01-31').principalId]"
             }
           ]
         },
