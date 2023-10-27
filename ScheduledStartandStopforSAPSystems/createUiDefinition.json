@@ -27,13 +27,7 @@
             "label": "User assigned managed identity",
             "toolTip": "Enter a user assigned managed identity that will be associated with the logic app to trigger the start and stop of VIS resources.",
             "constraints": {
-              "required": true,
-              "validations": [
-                {
-                  "regex": "^\/subscriptions\/[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12}\/resourcegroups\/[a-zA-Z0-9._()\\-\\[\\]]+\/providers\/microsoft.managedidentity\/userassignedidentities\/[a-zA-Z0-9._()\\-\\[\\]]+$",
-                  "message": "Invalid resource ID."
-                }
-              ]
+              "required": true
             }
           },
           {
@@ -288,15 +282,7 @@
             "type": "Microsoft.Common.TextBox",
             "label": "At this minute",
             "toolTip": "If you select 'Day' or 'Week', you can select one or more integers from 0 to 59 as the minutes of the hour when you want to run the workflow.",
-            "visible": "[or(equals(steps('scheduleDetails').Frequency, 'Week'), equals(steps('scheduleDetails').Frequency, 'Day'))]",
-            "constraints": {
-              "validations": [
-                {
-                  "regex": "^[0-5]?[0-9]$",
-                  "message": "Only value between 0-60 allowed."
-                }
-              ]
-            }
+            "visible": "[or(equals(steps('scheduleDetails').Frequency, 'Week'), equals(steps('scheduleDetails').Frequency, 'Day'))]"
           },
           {
             "name": "TimeZone",
@@ -841,7 +827,9 @@
       "OnTheseDays": "[steps('scheduleDetails').OnTheseDays]",
       "Interval": "[steps('scheduleDetails').Interval]",
       "StartTime": "[steps('scheduleDetails').StartTime]",
-      "TimeZone": "[steps('scheduleDetails').TimeZone]"
+      "TimeZone": "[steps('scheduleDetails').TimeZone]",
+      "AtTheseHours": "[steps('scheduleDetails').AtTheseHours]",
+      "AtThisMinutes": "[steps('scheduleDetails').AtThisMinute]"
     }
   }
 }
