@@ -91,7 +91,7 @@
     },
     "AtTheseHours": {
       "type": "array",
-      "defaultValue": [],
+      "defaultValue": ["00"],
       "metadata": {
         "required": false,
         "displayName": "At these hours"
@@ -99,7 +99,7 @@
     },
     "AtThisMinutes": {
       "type": "array",
-      "defaultValue": [],
+      "defaultValue": ["0"],
       "metadata": {
         "required": false,
         "displayName": "At these minutes"
