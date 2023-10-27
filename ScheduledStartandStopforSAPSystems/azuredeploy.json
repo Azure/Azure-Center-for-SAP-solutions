@@ -137,6 +137,7 @@
     "logicAppAlertName": "[toLower( concat( parameters('LogicAppName'), '-logicappalert-', uniqueString(deployment().name) ) )]",
     "actionGroupName": "[toLower( concat( 'sapops-', uniqueString(deployment().name) ) )]",
     "visAlertName": "[toLower( concat( 'sapops-visalert-', uniqueString(deployment().name) ) )]",
+    "defaultAtTheseHours": ["0"],
     "dailySchedule": {
       "Recurrence": {
         "recurrence": {
@@ -144,7 +145,7 @@
           "interval": "[parameters('Interval')]",
           "startTime": "[parameters('StartTime')]",
           "schedule": {
-            "hours": "[parameters('AtTheseHours')]",
+            "hours": "[if(equals(length(parameters('AtTheseHours')), 0), json(string(variables('defaultAtTheseHours'))), parameters('AtTheseHours'))]",
             "minutes": "[parameters('AtThisMinutes')]"
           },
           "timeZone": "[parameters('TimeZone')]"
@@ -160,7 +161,7 @@
           "startTime": "[parameters('StartTime')]",
           "schedule": {
             "weekDays": "[parameters('OnTheseDays')]",
-            "hours": "[parameters('AtTheseHours')]",
+            "hours": "[if(equals(length(parameters('AtTheseHours')), 0), json(string(variables('defaultAtTheseHours'))), parameters('AtTheseHours'))]",
             "minutes": "[parameters('AtThisMinutes')]"
           },
           "timeZone": "[parameters('TimeZone')]"
