@@ -89,6 +89,22 @@
         "displayName": "On these days"
       }
     },
+    "AtTheseHours": {
+      "type": "array",
+      "defaultValue": ["00"],
+      "metadata": {
+        "required": false,
+        "displayName": "At these hours"
+      }
+    },
+    "AtThisMinutes": {
+      "type": "array",
+      "defaultValue": ["0"],
+      "metadata": {
+        "required": false,
+        "displayName": "At these minutes"
+      }
+    },
     "StartTime": {
       "type": "string",
       "metadata": {
@@ -121,21 +137,39 @@
     "logicAppAlertName": "[toLower( concat( parameters('LogicAppName'), '-logicappalert-', uniqueString(deployment().name) ) )]",
     "actionGroupName": "[toLower( concat( 'sapops-', uniqueString(deployment().name) ) )]",
     "visAlertName": "[toLower( concat( 'sapops-visalert-', uniqueString(deployment().name) ) )]",
-    "weekly": {
+    "defaultAtTheseHours": ["0"],
+    "dailySchedule": {
       "Recurrence": {
         "recurrence": {
           "frequency": "[parameters('Frequency')]",
           "interval": "[parameters('Interval')]",
           "startTime": "[parameters('StartTime')]",
           "schedule": {
-            "weekDays": "[parameters('OnTheseDays')]"
+            "hours": "[if(equals(length(parameters('AtTheseHours')), 0), json(string(variables('defaultAtTheseHours'))), parameters('AtTheseHours'))]",
+            "minutes": "[parameters('AtThisMinutes')]"
           },
           "timeZone": "[parameters('TimeZone')]"
         },
         "type": "Recurrence"
       }
     },
-    "otherSchedules": {
+    "weeklySchedule": {
+      "Recurrence": {
+        "recurrence": {
+          "frequency": "[parameters('Frequency')]",
+          "interval": "[parameters('Interval')]",
+          "startTime": "[parameters('StartTime')]",
+          "schedule": {
+            "weekDays": "[parameters('OnTheseDays')]",
+            "hours": "[if(equals(length(parameters('AtTheseHours')), 0), json(string(variables('defaultAtTheseHours'))), parameters('AtTheseHours'))]",
+            "minutes": "[parameters('AtThisMinutes')]"
+          },
+          "timeZone": "[parameters('TimeZone')]"
+        },
+        "type": "Recurrence"
+      }
+    },
+    "monthlySchedule": {
       "Recurrence": {
         "recurrence": {
           "frequency": "[parameters('Frequency')]",
@@ -146,6 +180,7 @@
         "type": "Recurrence"
       }
     },
+    "otherSchedule": "[if(equals(parameters('Frequency'), 'Week'), variables('weeklySchedule'), variables('dailySchedule'))]",
     "sequentialOperations": {
       "concurrency": {
         "repetitions": 1
@@ -203,7 +238,7 @@
               "type": "bool"
             }
           },
-          "triggers": "[if(equals(parameters('Frequency'), 'Week'), variables('Weekly'), variables('otherSchedules'))]",
+          "triggers": "[if(equals(parameters('Frequency'), 'Month'), variables('monthlySchedule'), variables('otherSchedule'))]",
           "actions": {
             "SAP_operation_type": {
               "actions": {
