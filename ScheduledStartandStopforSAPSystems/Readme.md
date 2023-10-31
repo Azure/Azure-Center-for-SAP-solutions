@@ -9,7 +9,7 @@ In this guide, you’ll learn how to automate start and stop of SAP systems and 
 
 This automated start and stop of SAP enables you to easily optimize cost of running SAP workloads on pay-as-you-go Virtual machines by keeping your systems turned on only when you need them. This capability also allows you to stop and start SAP systems and HANA Databases at-scale during your patching or maintenance window. 
 
-With Azure Center for SAP solutions, you can stop and start SAP, individual instances and HANA database using Azure Portal, PowerShell, CLI and REST APIs. You can stop and start the underlying Virtual machines using the Start and Stop REST APIs. This currently is available only via REST APIs. 
+With Azure Center for SAP solutions, you can stop and start SAP, individual instances and HANA database using Azure Portal, PowerShell, CLI and REST APIs. You can stop and start the underlying Virtual machines using the Start and Stop REST APIs. This currently is available only via REST APIs.
 
 ### Prerequisites
 - An SAP system that you've created in Azure Center for SAP solutions or registered with Azure Center for SAP solutions as a Virtual Instance for SAP solutions resource.
@@ -37,8 +37,8 @@ With Azure Center for SAP solutions, you can stop and start SAP, individual inst
   
 3.	Select **Review + create**. After validation completes, select Create to deploy the template.
 4.	The following resources are created in the resource group once the deployment is successful:
-     - **Logic app**: This contains the schedule and workflow for stopping or starting the SAP systems and underlying VMs.
-     - **Action group**: This resource is for you to configure different types of notifications for successful and failed start and stop operations on SAP systems.
+     - **Logic app**: This contains the schedule and workflow for stopping or starting the SAP systems and underlying VMs. [Learn more here](https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-overview) about Azure logic apps.
+     - **Action group**: This resource is for you to configure different types of notifications for successful and failed start and stop operations on SAP systems. [Learn more here](https://learn.microsoft.com/en-us/azure/azure-monitor/alerts/action-groups) on how to configure Action Groups.
      - **Activity log alert rule**: This alert rule is used for sending an alert notification when VIS start and stop operations fails. Action group deployed is associated with this alert rule.
      - **Metric alert rule**: this alert rule triggers a notification if the logic app fails to initiate the workflow. Action group deployed is associated with this alert rule.
      - **API connection**: Logic App invokes ACSS REST APIs and hence this API connection resource is deployed.
