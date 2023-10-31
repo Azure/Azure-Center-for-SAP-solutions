@@ -50,5 +50,8 @@ The Azure portal is used to deploy the template. In addition to the Azure portal
 - You can also modify the recurrence schedule, Operation type, VIS resources associated and other parameters chosen during the deployment from the Logic App Designer page.
 - User assigned managed identity selected during template deployment is associated with the Logic app. You can modify it from the Identity page under Settings in the left navigation of Logic App overview page.
 
+### Alerts and Troubleshooting
+Configure the action groups to receive notifications when there are failures in Start and Stop operations on the VIS resources or Logic App triggers. In case there are failures in Start and Stop operations, you can review the Run History on Logic App overview page to see the details including exact error message in the execution flow.
+
 ### Clean up deployed resources
-You can delete the resources deployed into the resource group if you wish to delete the schedule for starting and stopping SAP systems.
+You can delete the resources deployed into the resource group if you wish to delete the schedule setup for starting and stopping SAP systems.
