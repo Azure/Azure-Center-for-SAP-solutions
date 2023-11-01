@@ -55,3 +55,6 @@ Configure the action groups to receive notifications when there are failures in 
 
 ### Clean up deployed resources
 You can delete the resources deployed into the resource group if you wish to delete the schedule setup for starting and stopping SAP systems.
+
+### Support
+In case you need support with using this ARM template, start a discussion thread in this [github repo](https://github.com/Azure/Azure-Center-for-SAP-solutions/discussions). If you have any issues with VIS start and stop operations itself, please log a support ticket from the Azure Center for SAP solutions page on [Azure Portal](https://aka.ms/acssportal)
