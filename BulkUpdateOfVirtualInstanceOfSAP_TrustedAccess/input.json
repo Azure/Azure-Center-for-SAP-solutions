@@ -1,0 +1,8 @@
+﻿{
+    "subscriptionId" : null,
+    "resourceIds" : [
+        "sample resource id"
+    ],
+    "accessType": null,
+    "identity": null
+}
