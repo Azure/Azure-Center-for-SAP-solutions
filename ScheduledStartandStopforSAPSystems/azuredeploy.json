@@ -366,11 +366,6 @@
                                         "type": "object"
                                       },
                                       "tags": {
-                                        "properties": {
-                                          "skipCleanup": {
-                                            "type": "string"
-                                          }
-                                        },
                                         "type": "object"
                                       },
                                       "type": {
@@ -382,7 +377,6 @@
                                       "name",
                                       "type",
                                       "location",
-                                      "tags",
                                       "systemData",
                                       "properties"
                                     ],
@@ -586,11 +580,6 @@
                                           "type": "object"
                                         },
                                         "tags": {
-                                          "properties": {
-                                            "skipCleanup": {
-                                              "type": "string"
-                                            }
-                                          },
                                           "type": "object"
                                         },
                                         "type": {
@@ -602,7 +591,6 @@
                                         "name",
                                         "type",
                                         "location",
-                                        "tags",
                                         "systemData",
                                         "properties"
                                       ],
