@@ -95,7 +95,7 @@
           {
             "name": "IncludeVirtualMachineOperation",
             "type": "Microsoft.Common.OptionsGroup",
-            "label": "Include vitual machine operations",
+            "label": "Include virtual machine operations",
             "toolTip": "Choose if you want the underlying VMs for the VIS to be started or stopped as part of the schedule. If you select No, only SAP application and/or database instance is stopped and started without any impact to underlying VMs.",
             "defaultValue": "No",
             "visible": true,
