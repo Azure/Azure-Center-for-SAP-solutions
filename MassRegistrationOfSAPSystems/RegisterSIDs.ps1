@@ -70,8 +70,10 @@ foreach($line in $file)
     $ManagedResourcesNetworkAccessType = $line.ManagedResourcesNetworkAccessType
     $Tag = $line.Tag
     
+    # Building the command to register the SID as a VIS resource
     $command = "New-AzWorkloadsSapVirtualInstance -ResourceGroupName $ResourceGroup -Name $SID -Location $Location -Environment $Environment -SapProduct $Product -CentralServerVmId $CentralServerVmId $ArgManagedRgName -IdentityType 'UserAssigned' -UserAssignedIdentity @{'$MsiID'=@{}} -Tag @{$Tag}"
     
+    # Checking if the optional parameters are provided in the input file and adding them to the command
     if ($ManagedRgName -match '[a-zA-Z]' -or $ManagedRgName -match '[0-9]')
     {
         $command += " -ManagedResourceGroupName $ManagedRgName"
@@ -86,7 +88,6 @@ foreach($line in $file)
     {
         $command += " -ManagedResourcesNetworkAccessType $ManagedResourcesNetworkAccessType"
     }
-
 
     # Creating script block for parallel execution
     $ScriptBlockCopy = {
