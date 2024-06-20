@@ -16,7 +16,7 @@ The example script described in this article can be run from any Powershell 5.1 
     4. SAP product for the SID being registered. Valid values are S/4HANA, ECC and Other.
     5. SAP Central Services (ASCS) virtual machine resource identifier.
     6. User assigned managed identity with the [right permissions](https://learn.microsoft.com/en-us/azure/sap/center-sap-solutions/register-existing-system#setup-user-assigned-managed-identity).
-    7. Optionally, you can provide the names for Managed Resource Group and Managed Storage Account that will be created as part of the registration process. If you do not provide these names, ACSS service deploys them using its default naming convention.
+    7. Optionally, you can provide the names for Managed Resource Group,  Managed Storage Account and Managed Resources Network Access Type that will be created as part of the registration process. If you do not provide these names, ACSS service deploys them using its default naming convention.
     8. For the resources which [get deployed](https://learn.microsoft.com/en-us/azure/sap/center-sap-solutions/register-existing-system#:~:text=When%20you%20register%20a%20system%20with%20Azure%20Center%20for%20SAP%20solutions%2C%20the%20following%20resources%20are%20created%20in%20your%20Subscription%3A) as part of registration process, you can optionally add any tags that you need. The [sample input file](https://github.com/Azure/Azure-Center-for-SAP-solutions/blob/main/MassRegistrationOfSAPSystems/RegistrationData.csv) shows how multiple tag name-value pairs can be added for each system being registered.
     9. State field in the input file can be ignored.
         
