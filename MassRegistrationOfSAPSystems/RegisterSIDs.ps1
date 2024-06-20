@@ -67,30 +67,33 @@ foreach($line in $file)
     $MsiID = $line.MsiId
     $ManagedRgName = $line.ManagedResourceGroupName
     $ManagedRgStorageAccountName = $line.ManagedRgStorageAccountName
-    $TagVals = ($line.Tag -replace '\s','').Split(";")
-    $Keys=@()
-    $Values=@()
+    $ManagedResourcesNetworkAccessType = $line.ManagedResourcesNetworkAccessType
+    $Tag = $line.Tag
+    
+    $command = "New-AzWorkloadsSapVirtualInstance -ResourceGroupName $ResourceGroup -Name $SID -Location $Location -Environment $Environment -SapProduct $Product -CentralServerVmId $CentralServerVmId $ArgManagedRgName -IdentityType 'UserAssigned' -UserAssignedIdentity @{'$MsiID'=@{}} -Tag @{$Tag}"
+    
+    if ($ManagedRgName -match '[a-zA-Z]' -or $ManagedRgName -match '[0-9]')
+    {
+        $command += " -ManagedResourceGroupName $ManagedRgName"
+    }
+    
+    if ($ManagedRgStorageAccountName -match '[a-zA-Z]' -or $ManagedRgStorageAccountName -match '[0-9]')
+    {
+        $command += " -ManagedResourceGroupStorageAccountName $ManagedRgStorageAccountName"
+    }
 
-    # Creating Tag Hash Table
-    foreach($TagVal in $TagVals)
+    if ($ManagedResourcesNetworkAccessType -match '[a-zA-Z]' -or $ManagedResourcesNetworkAccessType -match '[0-9]')
     {
-        $SubTag = $TagVal.Split("=")
-        $Keys += $SubTag[0]
-        $Values += $SubTag[1]
+        $command += " -ManagedResourcesNetworkAccessType $ManagedResourcesNetworkAccessType"
     }
-    $i=0
-    $Tag = @{}
-    foreach($Key in $Keys)
-    {
-        $Tag += @{$Key=$Values[$i]}
-        $i++
-    }
+
+
     # Creating script block for parallel execution
     $ScriptBlockCopy = {
-        param($ResourceGroup, $SID, $Location, $Environment, $Product, $CentralServerVmId, $ManagedRgName, $MsiID, $Tag, $ManagedRgStorageAccountName)
-        New-AzWorkloadsSapVirtualInstance -ResourceGroupName $ResourceGroup -Name $SID -Location $Location -Environment $Environment -SapProduct $Product -CentralServerVmId $CentralServerVmId -ManagedResourceGroupName $ManagedRgName -IdentityType 'UserAssigned' -UserAssignedIdentity @{$MsiID=@{}} -Tag $Tag -ManagedRgStorageAccountName $ManagedRgStorageAccountName
+        param($command)
+        Invoke-Expression $command
     }
-
+    
     # Generating random string for job name
     $random = -join ((65..90) + (97..122) | Get-Random -Count 8 | % {[char]$_})
 
@@ -98,7 +101,7 @@ foreach($line in $file)
     while ($true) {
         if ((Get-Job -State Running).Count -le $MaxParallelJobs)
         {
-            Start-Job -ScriptBlock $ScriptBlockCopy -ArgumentList $ResourceGroup, $SID, $Location, $Environment, $Product, $CentralServerVmId, $ManagedRgName, $MsiID, $Tag, $ManagedRgStorageAccountName -Name $random
+            Start-Job -ScriptBlock $ScriptBlockCopy -ArgumentList $command -Name $random
             break
         }
         else
