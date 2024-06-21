@@ -69,30 +69,47 @@ foreach($line in $file)
     $ManagedRgStorageAccountName = $line.ManagedRgStorageAccountName
     $ManagedResourcesNetworkAccessType = $line.ManagedResourcesNetworkAccessType
     $Tag = $line.Tag
-    
-    # Building the command to register the SID as a VIS resource
-    $command = "New-AzWorkloadsSapVirtualInstance -ResourceGroupName $ResourceGroup -Name $SID -Location $Location -Environment $Environment -SapProduct $Product -CentralServerVmId $CentralServerVmId $ArgManagedRgName -IdentityType 'UserAssigned' -UserAssignedIdentity @{'$MsiID'=@{}} -Tag @{$Tag}"
-    
+
     # Checking if the optional parameters are provided in the input file and adding them to the command
     if ($ManagedRgName -match '[a-zA-Z]' -or $ManagedRgName -match '[0-9]')
     {
-        $command += " -ManagedResourceGroupName $ManagedRgName"
+        $ArgManagedRgName = "-ManagedResourceGroupName $ManagedRgName"
+    }
+    else {
+        $ArgManagedRgName = ""
     }
     
     if ($ManagedRgStorageAccountName -match '[a-zA-Z]' -or $ManagedRgStorageAccountName -match '[0-9]')
     {
-        $command += " -ManagedResourceGroupStorageAccountName $ManagedRgStorageAccountName"
+        $ARGManagedRgStorageAccountName = "-ManagedRgStorageAccountName $ManagedRgStorageAccountName"
+    }
+    else {
+        $ARGManagedRgStorageAccountName = ""
     }
 
-    if ($ManagedResourcesNetworkAccessType -match '[a-zA-Z]' -or $ManagedResourcesNetworkAccessType -match '[0-9]')
+    if ($ManagedResourcesNetworkAccessType -match 'private' -or $ManagedResourcesNetworkAccessType -match 'public')
     {
-        $command += " -ManagedResourcesNetworkAccessType $ManagedResourcesNetworkAccessType"
+        $ArgManagedResourcesNetworkAccessType = "-ManagedResourcesNetworkAccessType $ManagedResourcesNetworkAccessType"
+    }
+    else {
+        $ArgManagedResourcesNetworkAccessType = ""
     }
 
     # Creating script block for parallel execution
     $ScriptBlockCopy = {
-        param($command)
-        Invoke-Expression $command
+        param($ResourceGroup, $SID, $Location, $Environment, $Product, $CentralServerVmId, `
+        $ArgManagedRgName, $MsiID, $Tag, $ARGManagedRgStorageAccountName, $ArgManagedResourcesNetworkAccessType)
+        $ResourceGroupClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$ResourceGroup")
+        $SIDClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$SID")
+        $LocationClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$Location")
+        $EnvironmentClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$Environment")
+        $ProductClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$Product")
+        $CentralServerVmIdClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$CentralServerVmId")
+        $ArgManagedRgNameClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$ArgManagedRgName")
+        $MsiIDClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$MsiID")
+        $ARGManagedRgStorageAccountNameClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$ARGManagedRgStorageAccountName")
+        $ArgManagedResourcesNetworkAccessTypeClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$ArgManagedResourcesNetworkAccessType")
+        Invoke-Expression -Command "New-AzWorkloadsSapVirtualInstance -ResourceGroupName '$ResourceGroupClean' -Name '$SIDClean' -Location '$LocationClean' -Environment '$EnvironmentClean' -SapProduct '$ProductClean' -CentralServerVmId '$CentralServerVmIdClean' -IdentityType 'UserAssigned' -UserAssignedIdentity @{'$MsiIDClean'=@{}} -Tag @{$Tag} $ArgManagedRgNameClean $ARGManagedRgStorageAccountNameClean $ArgManagedResourcesNetworkAccessTypeClean"
     }
     
     # Generating random string for job name
@@ -102,7 +119,9 @@ foreach($line in $file)
     while ($true) {
         if ((Get-Job -State Running).Count -le $MaxParallelJobs)
         {
-            Start-Job -ScriptBlock $ScriptBlockCopy -ArgumentList $command -Name $random
+            Start-Job -ScriptBlock $ScriptBlockCopy -ArgumentList $ResourceGroup, $SID, $Location, `
+                $Environment, $Product, $CentralServerVmId, $ArgManagedRgName, $MsiID, $Tag, `
+                $ARGManagedRgStorageAccountName, $ArgManagedResourcesNetworkAccessType -Name $random
             break
         }
         else
