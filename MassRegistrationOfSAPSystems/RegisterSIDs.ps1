@@ -70,29 +70,41 @@ foreach($line in $file)
     $ManagedResourcesNetworkAccessType = $line.ManagedResourcesNetworkAccessType
     $Tag = $line.Tag
 
-    # Checking if the optional parameters are provided in the input file and adding them to the command
-    if ([string]::IsNullOrEmpty($ManagedRgName) -or $ManagedRgName.Trim().Length -eq 0)
+    # Checking if the optional parameters are provided with valid names in the input file and adding them to the command
+    if ($ManagedRgName -match '^[a-zA-Z0-9\._\-\(\)]{1,90}$')
+    {
+        $ArgManagedRgName = "-ManagedResourceGroupName $ManagedRgName"
+    }
+    elseif ([string]::IsNullOrEmpty($ManagedRgName) -or $ManagedRgName.Trim().Length -eq 0)
     {
         $ArgManagedRgName = ""
     }
     else {
-        $ArgManagedRgName = "-ManagedResourceGroupName $ManagedRgName"
+        throw "Resource group name '$ManagedRgName' is not valid. It must only contain alphanumeric characters, periods, underscores, hyphens, and parentheses, and be between 1 and 90 characters in length. Please check https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftresources for more details."
     }
     
-    if ($ManagedRgStorageAccountName -match '[a-zA-Z]' -or $ManagedRgStorageAccountName -match '[0-9]')
+    if ($ManagedRgStorageAccountName -match '^[a-z0-9]{3,24}$')
     {
         $ARGManagedRgStorageAccountName = "-ManagedRgStorageAccountName $ManagedRgStorageAccountName"
     }
-    else {
+    elseif ([string]::IsNullOrEmpty($ManagedRgStorageAccountName) -or $ManagedRgStorageAccountName.Trim().Length -eq 0)
+    {
         $ARGManagedRgStorageAccountName = ""
+    }
+    else {
+        throw "Storage account name '$ManagedRgStorageAccountName' is not valid. It must only contain lowercase alphanumeric characters and be between 3 and 24 characters in length. Please check https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftstorage for more details."
     }
 
     if ($ManagedResourcesNetworkAccessType -match 'private' -or $ManagedResourcesNetworkAccessType -match 'public')
     {
         $ArgManagedResourcesNetworkAccessType = "-ManagedResourcesNetworkAccessType $ManagedResourcesNetworkAccessType"
     }
-    else {
+    elseif ([string]::IsNullOrEmpty($ManagedResourcesNetworkAccessType) -or $ManagedResourcesNetworkAccessType.Trim().Length -eq 0)
+    {
         $ArgManagedResourcesNetworkAccessType = ""
+    }
+    else {
+        throw "Network access type '$ManagedResourcesNetworkAccessType' is not valid. It must be either 'private' or 'public'."
     }
 
     # Creating script block for parallel execution
