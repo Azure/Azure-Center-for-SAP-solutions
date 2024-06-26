@@ -71,12 +71,12 @@ foreach($line in $file)
     $Tag = $line.Tag
 
     # Checking if the optional parameters are provided in the input file and adding them to the command
-    if ($ManagedRgName -match '[a-zA-Z]' -or $ManagedRgName -match '[0-9]')
+    if ([string]::IsNullOrEmpty($ManagedRgName) -or $ManagedRgName.Trim().Length -eq 0)
     {
-        $ArgManagedRgName = "-ManagedResourceGroupName $ManagedRgName"
+        $ArgManagedRgName = ""
     }
     else {
-        $ArgManagedRgName = ""
+        $ArgManagedRgName = "-ManagedResourceGroupName $ManagedRgName"
     }
     
     if ($ManagedRgStorageAccountName -match '[a-zA-Z]' -or $ManagedRgStorageAccountName -match '[0-9]')
