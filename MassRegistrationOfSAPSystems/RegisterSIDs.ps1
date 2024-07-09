@@ -67,30 +67,63 @@ foreach($line in $file)
     $MsiID = $line.MsiId
     $ManagedRgName = $line.ManagedResourceGroupName
     $ManagedRgStorageAccountName = $line.ManagedRgStorageAccountName
-    $TagVals = ($line.Tag -replace '\s','').Split(";")
-    $Keys=@()
-    $Values=@()
+    $ManagedResourcesNetworkAccessType = $line.ManagedResourcesNetworkAccessType
+    $Tag = $line.Tag
 
-    # Creating Tag Hash Table
-    foreach($TagVal in $TagVals)
+    # Checking if the optional parameters are provided with valid names in the input file and adding them to the command
+    if ($ManagedRgName -match '^[a-zA-Z0-9\._\-\(\)]{1,90}$')
     {
-        $SubTag = $TagVal.Split("=")
-        $Keys += $SubTag[0]
-        $Values += $SubTag[1]
+        $ArgManagedRgName = "-ManagedResourceGroupName $ManagedRgName"
     }
-    $i=0
-    $Tag = @{}
-    foreach($Key in $Keys)
+    elseif ([string]::IsNullOrEmpty($ManagedRgName) -or $ManagedRgName.Trim().Length -eq 0)
     {
-        $Tag += @{$Key=$Values[$i]}
-        $i++
+        $ArgManagedRgName = ""
     }
+    else {
+        throw "Resource group name '$ManagedRgName' is not valid. It must only contain alphanumeric characters, periods, underscores, hyphens, and parentheses, and be between 1 and 90 characters in length. Please check https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftresources for more details."
+    }
+    
+    if ($ManagedRgStorageAccountName -match '^[a-z0-9]{3,24}$')
+    {
+        $ARGManagedRgStorageAccountName = "-ManagedRgStorageAccountName $ManagedRgStorageAccountName"
+    }
+    elseif ([string]::IsNullOrEmpty($ManagedRgStorageAccountName) -or $ManagedRgStorageAccountName.Trim().Length -eq 0)
+    {
+        $ARGManagedRgStorageAccountName = ""
+    }
+    else {
+        throw "Storage account name '$ManagedRgStorageAccountName' is not valid. It must only contain lowercase alphanumeric characters and be between 3 and 24 characters in length. Please check https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftstorage for more details."
+    }
+
+    if ($ManagedResourcesNetworkAccessType -match 'private' -or $ManagedResourcesNetworkAccessType -match 'public')
+    {
+        $ArgManagedResourcesNetworkAccessType = "-ManagedResourcesNetworkAccessType $ManagedResourcesNetworkAccessType"
+    }
+    elseif ([string]::IsNullOrEmpty($ManagedResourcesNetworkAccessType) -or $ManagedResourcesNetworkAccessType.Trim().Length -eq 0)
+    {
+        $ArgManagedResourcesNetworkAccessType = ""
+    }
+    else {
+        throw "Network access type '$ManagedResourcesNetworkAccessType' is not valid. It must be either 'private' or 'public'."
+    }
+
     # Creating script block for parallel execution
     $ScriptBlockCopy = {
-        param($ResourceGroup, $SID, $Location, $Environment, $Product, $CentralServerVmId, $ManagedRgName, $MsiID, $Tag, $ManagedRgStorageAccountName)
-        New-AzWorkloadsSapVirtualInstance -ResourceGroupName $ResourceGroup -Name $SID -Location $Location -Environment $Environment -SapProduct $Product -CentralServerVmId $CentralServerVmId -ManagedResourceGroupName $ManagedRgName -IdentityType 'UserAssigned' -UserAssignedIdentity @{$MsiID=@{}} -Tag $Tag -ManagedRgStorageAccountName $ManagedRgStorageAccountName
+        param($ResourceGroup, $SID, $Location, $Environment, $Product, $CentralServerVmId, `
+        $ArgManagedRgName, $MsiID, $Tag, $ARGManagedRgStorageAccountName, $ArgManagedResourcesNetworkAccessType)
+        $ResourceGroupClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$ResourceGroup")
+        $SIDClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$SID")
+        $LocationClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$Location")
+        $EnvironmentClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$Environment")
+        $ProductClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$Product")
+        $CentralServerVmIdClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$CentralServerVmId")
+        $ArgManagedRgNameClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$ArgManagedRgName")
+        $MsiIDClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$MsiID")
+        $ARGManagedRgStorageAccountNameClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$ARGManagedRgStorageAccountName")
+        $ArgManagedResourcesNetworkAccessTypeClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$ArgManagedResourcesNetworkAccessType")
+        Invoke-Expression -Command "New-AzWorkloadsSapVirtualInstance -ResourceGroupName '$ResourceGroupClean' -Name '$SIDClean' -Location '$LocationClean' -Environment '$EnvironmentClean' -SapProduct '$ProductClean' -CentralServerVmId '$CentralServerVmIdClean' -IdentityType 'UserAssigned' -UserAssignedIdentity @{'$MsiIDClean'=@{}} -Tag @{$Tag} $ArgManagedRgNameClean $ARGManagedRgStorageAccountNameClean $ArgManagedResourcesNetworkAccessTypeClean"
     }
-
+    
     # Generating random string for job name
     $random = -join ((65..90) + (97..122) | Get-Random -Count 8 | % {[char]$_})
 
@@ -98,7 +131,9 @@ foreach($line in $file)
     while ($true) {
         if ((Get-Job -State Running).Count -le $MaxParallelJobs)
         {
-            Start-Job -ScriptBlock $ScriptBlockCopy -ArgumentList $ResourceGroup, $SID, $Location, $Environment, $Product, $CentralServerVmId, $ManagedRgName, $MsiID, $Tag, $ManagedRgStorageAccountName -Name $random
+            Start-Job -ScriptBlock $ScriptBlockCopy -ArgumentList $ResourceGroup, $SID, $Location, `
+                $Environment, $Product, $CentralServerVmId, $ArgManagedRgName, $MsiID, $Tag, `
+                $ARGManagedRgStorageAccountName, $ArgManagedResourcesNetworkAccessType -Name $random
             break
         }
         else
