@@ -1176,9 +1176,9 @@
                                                   "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[4])}/providers/Microsoft.Compute/virtualMachines/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[8])}/deallocate",
                                                   "queries": {
                                                       "api-version": "2019-12-01"
-                                                  },
-                                                  "type": "ApiConnection"
-                                              }
+                                                  }
+                                              },
+                                              "type": "ApiConnection"
                                           }
                                       },
                                       "foreach": "@item()?['properties']?['vmDetails']",
