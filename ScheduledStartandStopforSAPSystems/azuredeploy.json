@@ -855,21 +855,21 @@
                                                   "For_each_virtual_machine_list": {
                                                       "foreach": "@items('For_every_database_instance_VMs')?['properties']?['vmDetails']",
                                                       "actions": {
-                                                          "Deallocate_virtual_machine": {
-                                                              "type": "ApiConnection",
-                                                              "inputs": {
-                                                                  "host": {
-                                                                      "connection": {
-                                                                          "name": "@parameters('$connections')['arm']['connectionId']"
-                                                                      }
-                                                                  },
-                                                                  "method": "post",
-                                                                  "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_virtual_machine_list')['virtualMachineId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_virtual_machine_list')['virtualMachineId'], '/')[4])}/providers/Microsoft.Compute/virtualMachines/@{encodeURIComponent(split(items('For_each_virtual_machine_list')['virtualMachineId'], '/')[8])}/deallocate",
-                                                                  "queries": {
-                                                                      "api-version": "2019-12-01"
-                                                                  }
-                                                              }
-                                                          }
+                                                          "Deallocate_Database_VM": {
+                                                                "inputs": {
+                                                                    "host": {
+                                                                        "connection": {
+                                                                            "name": "@parameters('$connections')['arm']['connectionId']"
+                                                                        }
+                                                                    },
+                                                                    "method": "post",
+                                                                    "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_virtual_machine_list')['virtualMachineId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_virtual_machine_list')['virtualMachineId'], '/')[4])}/providers/@{encodeURIComponent('Microsoft.Compute')}/@{encodeURIComponent('virtualMachines/',split(items('For_each_virtual_machine_list')['virtualMachineId'], '/')[8])}/@{encodeURIComponent('deallocate')}",
+                                                                    "queries": {
+                                                                        "x-ms-api-version": "2019-12-01"
+                                                                    }
+                                                                },
+                                                                "type": "ApiConnection"
+                                                            }
                                                       },
                                                       "type": "Foreach"
                                                   }
@@ -1135,21 +1135,21 @@
                                   "For_each_central_server_VM": {
                                       "foreach": "@item()?['properties']?['vmDetails']",
                                       "actions": {
-                                          "Deallocate_central_server_VM": {
-                                              "type": "ApiConnection",
-                                              "inputs": {
-                                                  "host": {
-                                                      "connection": {
-                                                          "name": "@parameters('$connections')['arm']['connectionId']"
-                                                      }
-                                                  },
-                                                  "method": "post",
-                                                  "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_central_server_VM')['virtualMachineId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_central_server_VM')['virtualMachineId'], '/')[4])}/providers/Microsoft.Compute/virtualMachines/@{encodeURIComponent(split(items('For_each_central_server_VM')['virtualMachineId'], '/')[8])}/deallocate",
-                                                  "queries": {
-                                                      "api-version": "2019-12-01"
-                                                  }
-                                              }
-                                          }
+                                          "Deallocate_CS_VM": {
+                                                "inputs": {
+                                                    "host": {
+                                                        "connection": {
+                                                            "name": "@parameters('$connections')['arm']['connectionId']"
+                                                        }
+                                                    },
+                                                    "method": "post",
+                                                    "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_central_server_VM')['virtualMachineId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_central_server_VM')['virtualMachineId'], '/')[4])}/providers/@{encodeURIComponent('Microsoft.Compute')}/@{encodeURIComponent('virtualMachines/',split(items('For_each_central_server_VM')['virtualMachineId'], '/')[8])}/@{encodeURIComponent('deallocate')}",
+                                                    "queries": {
+                                                        "x-ms-api-version": "2019-12-01"
+                                                    }
+                                                },
+                                                "type": "ApiConnection"
+                                            }
                                       },
                                       "type": "Foreach"
                                   }
@@ -1165,21 +1165,21 @@
                               "actions": {
                                   "For_each_app_VM": {
                                       "actions": {
-                                          "Deallocate_app_VM": {
-                                              "inputs": {
-                                                  "host": {
-                                                      "connection": {
-                                                          "name": "@parameters('$connections')['arm']['connectionId']"
-                                                      }
-                                                  },
-                                                  "method": "post",
-                                                  "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[4])}/providers/Microsoft.Compute/virtualMachines/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[8])}/deallocate",
-                                                  "queries": {
-                                                      "api-version": "2019-12-01"
-                                                  }
-                                              },
-                                              "type": "ApiConnection"
-                                          }
+                                          "Deallocate_App_VM": {
+                                                "inputs": {
+                                                    "host": {
+                                                        "connection": {
+                                                            "name": "@parameters('$connections')['arm']['connectionId']"
+                                                        }
+                                                    },
+                                                    "method": "post",
+                                                    "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[4])}/providers/@{encodeURIComponent('Microsoft.Compute')}/@{encodeURIComponent('virtualMachines/',split(items('For_each_app_VM')['virtualMachineId'], '/')[8])}/@{encodeURIComponent('deallocate')}",
+                                                    "queries": {
+                                                        "x-ms-api-version": "2019-12-01"
+                                                    }
+                                                },
+                                                "type": "ApiConnection"
+                                            }
                                       },
                                       "foreach": "@item()?['properties']?['vmDetails']",
                                       "type": "Foreach"
