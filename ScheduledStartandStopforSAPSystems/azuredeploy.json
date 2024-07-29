@@ -860,7 +860,7 @@
                                                               "inputs": {
                                                                   "host": {
                                                                       "connection": {
-                                                                          "name": "@parameters('$connections')['azurevm']['connectionId']"
+                                                                          "name": "@parameters('$connections')['arm']['connectionId']"
                                                                       }
                                                                   },
                                                                   "method": "post",
@@ -1140,7 +1140,7 @@
                                               "inputs": {
                                                   "host": {
                                                       "connection": {
-                                                          "name": "@parameters('$connections')['azurevm']['connectionId']"
+                                                          "name": "@parameters('$connections')['arm']['connectionId']"
                                                       }
                                                   },
                                                   "method": "post",
@@ -1169,7 +1169,7 @@
                                               "inputs": {
                                                   "host": {
                                                       "connection": {
-                                                          "name": "@parameters('$connections')['azurevm']['connectionId']"
+                                                          "name": "@parameters('$connections')['arm']['connectionId']"
                                                       }
                                                   },
                                                   "method": "post",
@@ -1235,17 +1235,6 @@
           "$connections": {
             "value": {
               "arm": {
-                "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'arm')]",
-                "connectionId": "[resourceId('Microsoft.Web/connections', variables('armConnectionName'))]",
-                "connectionProperties": {
-                  "authentication": {
-                    "type": "ManagedServiceIdentity",
-                    "identity": "[parameters('ManagedIdentityId')]"
-                  }
-                },
-                "connectionName": "variables('armConnectionName')"
-              },
-              "azurevm": {
                 "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'arm')]",
                 "connectionId": "[resourceId('Microsoft.Web/connections', variables('armConnectionName'))]",
                 "connectionProperties": {
