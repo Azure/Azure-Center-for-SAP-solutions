@@ -864,7 +864,7 @@
                                                                       }
                                                                   },
                                                                   "method": "post",
-                                                                  "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_virtual_machine_list')['virtualMachineId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_virtual_machine_list')['virtualMachineId'], '/')[4])}/providers/Microsoft.Compute/virtualMachines/@{encodeURIComponent(split(items('For_each_virtual_machine_list')['virtualMachineId'], '/')[8])}/deallocate",
+                                                                  "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_virtual_machine_list')['virtualMachineId'],'/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_virtual_machine_list')['virtualMachineId'],'/')[4])}/providers/@{encodeURIComponent('Microsoft.Compute')}/@{encodeURIComponent('virtualMachines/', split(items('For_each_virtual_machine_list')['virtualMachineId'], '/')[8]), '/deallocate'}",
                                                                   "queries": {
                                                                       "api-version": "2019-12-01"
                                                                   }
@@ -1144,7 +1144,7 @@
                                                       }
                                                   },
                                                   "method": "post",
-                                                  "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_central_server_VM')['virtualMachineId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_central_server_VM')['virtualMachineId'], '/')[4])}/providers/Microsoft.Compute/virtualMachines/@{encodeURIComponent(split(items('For_each_central_server_VM')['virtualMachineId'], '/')[8])}/deallocate",
+                                                  "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_central_server_VM')['virtualMachineId'],'/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_central_server_VM')['virtualMachineId'], '/')[4])}/providers/@{encodeURIComponent('Microsoft.Compute')}/@{encodeURIComponent('virtualMachines/', split(items('For_each_central_server_VM')['virtualMachineId'], '/')[8]), '/deallocate'}",
                                                   "queries": {
                                                       "api-version": "2019-12-01"
                                                   }
@@ -1173,7 +1173,7 @@
                                                       }
                                                   },
                                                   "method": "post",
-                                                  "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[4])}/providers/Microsoft.Compute/virtualMachines/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[8])}/deallocate",
+                                                  "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'],'/')[4])}/providers/@{encodeURIComponent('Microsoft.Compute')}/@{encodeURIComponent('virtualMachines/', split(items('For_each_app_VM')['virtualMachineId'], '/')[8]), '/deallocate'}",
                                                   "queries": {
                                                       "api-version": "2019-12-01"
                                                   }
