@@ -1173,7 +1173,7 @@
                                                       }
                                                   },
                                                   "method": "post",
-                                                  "path": "/subscriptions/7235b861-9c47-4957-8841-e5f0b305a68a/resourcegroups/adhoc-e2e-svi-03jul-fec1-avset-rhel-sap-ha-84sapha-gen2/providers/microsoft.compute/virtualmachines/b65appvm1/deallocate",
+                                                  "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[4])}/providers/Microsoft.Compute/virtualMachines/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[8])}/deallocate",
                                                   "queries": {
                                                       "api-version": "2019-12-01"
                                                   }
@@ -1235,6 +1235,17 @@
           "$connections": {
             "value": {
               "arm": {
+                "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'arm')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('armConnectionName'))]",
+                "connectionProperties": {
+                  "authentication": {
+                    "type": "ManagedServiceIdentity",
+                    "identity": "[parameters('ManagedIdentityId')]"
+                  }
+                },
+                "connectionName": "variables('armConnectionName')"
+              },
+              "azurevm": {
                 "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'arm')]",
                 "connectionId": "[resourceId('Microsoft.Web/connections', variables('armConnectionName'))]",
                 "connectionProperties": {
