@@ -1162,13 +1162,10 @@
                               "type": "Foreach"
                           },
                           "For_each_Application_Instance": {
-                              "foreach": "@outputs('Parse_App_Instance_Information')?['body']?['value']",
                               "actions": {
                                   "For_each_app_VM": {
-                                      "foreach": "@item()?['properties']?['vmDetails']",
                                       "actions": {
                                           "Deallocate_app_VM": {
-                                              "type": "ApiConnection",
                                               "inputs": {
                                                   "host": {
                                                       "connection": {
@@ -1179,13 +1176,16 @@
                                                   "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[4])}/providers/Microsoft.Compute/virtualMachines/@{encodeURIComponent(split(items('For_each_app_VM')['virtualMachineId'], '/')[8])}/deallocate",
                                                   "queries": {
                                                       "api-version": "2019-12-01"
-                                                  }
+                                                  },
+                                                  "type": "ApiConnection"
                                               }
                                           }
                                       },
+                                      "foreach": "@item()?['properties']?['vmDetails']",
                                       "type": "Foreach"
                                   }
                               },
+                              "foreach": "@outputs('Parse_App_Instance_Information')?['body']?['value']",
                               "runAfter": {
                                   "Parse_App_Instance_Information": [
                                       "Succeeded"
