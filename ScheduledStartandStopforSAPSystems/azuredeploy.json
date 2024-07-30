@@ -782,7 +782,7 @@
                 "actions": {
                     "For_each_VIS_resource_start": {
                         "actions": {
-                            "Database_start_operation-copy": {
+                            "Database_start_operation": {
                                 "actions": {
                                     "For_each_DB_instance_start": {
                                         "actions": {
@@ -988,7 +988,7 @@
                                     }
                                 },
                                 "runAfter": {
-                                    "Database_start_operation-copy": [
+                                    "Database_start_operation": [
                                         "Succeeded"
                                     ]
                                 },
@@ -1060,22 +1060,6 @@
                                         },
                                         "type": "Foreach"
                                     },
-                                    "For_each_db_instance": {
-                                        "actions": {
-                                            "For_each_database_vm": {
-                                                "actions": {},
-                                                "foreach": "@item()?['properties']?['vmDetails']",
-                                                "type": "Foreach"
-                                            }
-                                        },
-                                        "foreach": "@outputs('Parse_Database_Instance_Information_to_start_DB_VM')?['body']?['value']",
-                                        "runAfter": {
-                                            "Parse_Database_Instance_Information_to_start_DB_VM": [
-                                                "Succeeded"
-                                            ]
-                                        },
-                                        "type": "Foreach"
-                                    },
                                     "Get_App_Instances_of_the_VIS_to_Start_App_VMs": {
                                         "inputs": {
                                             "host": {
@@ -1100,21 +1084,6 @@
                                             },
                                             "method": "get",
                                             "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8],'/centralInstances')}",
-                                            "queries": {
-                                                "x-ms-api-version": "2023-10-01-preview"
-                                            }
-                                        },
-                                        "type": "ApiConnection"
-                                    },
-                                    "Get_DB_Instances_of_the_VIS_to_Start_Db_VM": {
-                                        "inputs": {
-                                            "host": {
-                                                "connection": {
-                                                    "name": "@parameters('$connections')['arm']['connectionId']"
-                                                }
-                                            },
-                                            "method": "get",
-                                            "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8],'/databaseInstances')}",
                                             "queries": {
                                                 "x-ms-api-version": "2023-10-01-preview"
                                             }
@@ -1345,125 +1314,6 @@
                                         },
                                         "runAfter": {
                                             "Get_Central_Instances_of_the_VIS_to_Start_CS_VM": [
-                                                "Succeeded"
-                                            ]
-                                        },
-                                        "type": "ParseJson"
-                                    },
-                                    "Parse_Database_Instance_Information_to_start_DB_VM": {
-                                        "inputs": {
-                                            "content": "@body('Get_DB_Instances_of_the_VIS_to_Start_Db_VM')",
-                                            "schema": {
-                                                "properties": {
-                                                    "value": {
-                                                        "items": {
-                                                            "properties": {
-                                                                "id": {
-                                                                    "type": "string"
-                                                                },
-                                                                "location": {
-                                                                    "type": "string"
-                                                                },
-                                                                "name": {
-                                                                    "type": "string"
-                                                                },
-                                                                "properties": {
-                                                                    "properties": {
-                                                                        "databaseSid": {
-                                                                            "type": "string"
-                                                                        },
-                                                                        "databaseType": {
-                                                                            "type": "string"
-                                                                        },
-                                                                        "ipAddress": {
-                                                                            "type": "string"
-                                                                        },
-                                                                        "loadBalancerDetails": {
-                                                                            "properties": {
-                                                                                "id": {
-                                                                                    "type": "string"
-                                                                                }
-                                                                            },
-                                                                            "type": "object"
-                                                                        },
-                                                                        "provisioningState": {
-                                                                            "type": "string"
-                                                                        },
-                                                                        "status": {
-                                                                            "type": "string"
-                                                                        },
-                                                                        "subnet": {
-                                                                            "type": "string"
-                                                                        },
-                                                                        "vmDetails": {
-                                                                            "items": {
-                                                                                "properties": {
-                                                                                    "status": {
-                                                                                        "type": "string"
-                                                                                    },
-                                                                                    "virtualMachineId": {
-                                                                                        "type": "string"
-                                                                                    }
-                                                                                },
-                                                                                "required": [
-                                                                                    "virtualMachineId",
-                                                                                    "status"
-                                                                                ],
-                                                                                "type": "object"
-                                                                            },
-                                                                            "type": "array"
-                                                                        }
-                                                                    },
-                                                                    "type": "object"
-                                                                },
-                                                                "systemData": {
-                                                                    "properties": {
-                                                                        "createdAt": {
-                                                                            "type": "string"
-                                                                        },
-                                                                        "createdBy": {
-                                                                            "type": "string"
-                                                                        },
-                                                                        "createdByType": {
-                                                                            "type": "string"
-                                                                        },
-                                                                        "lastModifiedAt": {
-                                                                            "type": "string"
-                                                                        },
-                                                                        "lastModifiedBy": {
-                                                                            "type": "string"
-                                                                        },
-                                                                        "lastModifiedByType": {
-                                                                            "type": "string"
-                                                                        }
-                                                                    },
-                                                                    "type": "object"
-                                                                },
-                                                                "tags": {
-                                                                    "type": "object"
-                                                                },
-                                                                "type": {
-                                                                    "type": "string"
-                                                                }
-                                                            },
-                                                            "required": [
-                                                                "id",
-                                                                "name",
-                                                                "type",
-                                                                "location",
-                                                                "systemData",
-                                                                "properties"
-                                                            ],
-                                                            "type": "object"
-                                                        },
-                                                        "type": "array"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        },
-                                        "runAfter": {
-                                            "Get_DB_Instances_of_the_VIS_to_Start_Db_VM": [
                                                 "Succeeded"
                                             ]
                                         },
@@ -1714,7 +1564,7 @@
                 "runAfter": {},
                 "type": "If"
             }
-        } 
+        }
   },
     "parameters": {
           "$connections": {
