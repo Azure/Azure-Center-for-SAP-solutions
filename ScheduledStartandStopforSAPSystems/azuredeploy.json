@@ -593,6 +593,12 @@
                                 "@parameters('OperationName')",
                                 "stop"
                             ]
+                        },
+                        {
+                            "equals": [
+                                "@variables('LogicAppSuccessExecution')",
+                                true
+                            ]
                         }
                     ]
                 },
@@ -603,14 +609,223 @@
                 },
                 "type": "If"
             },
+            "Check_if_Logic_App_Ran_Successfully": {
+                "actions": {
+                    "Terminate_with_Success": {
+                        "inputs": {
+                            "runStatus": "Succeeded"
+                        },
+                        "type": "Terminate"
+                    }
+                },
+                "else": {
+                    "actions": {
+                        "Terminate_with_Failure": {
+                            "inputs": {
+                                "runError": {
+                                    "code": "SomeOperationsHaveFailed",
+                                    "message": "Resources where @{parameters('OperationName')} operation did not work: @{variables('ErrorResourcesIfAny')}"
+                                },
+                                "runStatus": "Failed"
+                            },
+                            "type": "Terminate"
+                        }
+                    }
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@variables('LogicAppSuccessExecution')",
+                                true
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Check_if_Infra_Stop_Operation": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "If"
+            },
+            "Database_Instance_Running_Status": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "DbInstanceStatusRunning",
+                            "type": "boolean",
+                            "value": false
+                        }
+                    ]
+                },
+                "runAfter": {},
+                "type": "InitializeVariable"
+            },
+            "Logic_App_Success_or_Failed_Execution": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "LogicAppSuccessExecution",
+                            "type": "boolean",
+                            "value": true
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "VIS_Running_Status": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Resources_with_errors,_if_any": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "ErrorResourcesIfAny",
+                            "type": "array",
+                            "value": []
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Logic_App_Success_or_Failed_Execution": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
             "SAP_operation_type": {
                 "actions": {
                     "For_each_VIS_resource_start": {
                         "actions": {
-                            "Database_start_operation-copy-copy": {
+                            "Assume_VIS_Running_to_be_false": {
+                                "inputs": {
+                                    "name": "VISStatusRunning",
+                                    "value": false
+                                },
+                                "runAfter": {
+                                    "Initiate_VIS_resource_start": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "SetVariable"
+                            },
+                            "Check_if_VIS_is_running_": {
+                                "actions": {},
+                                "else": {
+                                    "actions": {
+                                        "Set_VIS_Status_of_Running_to_false": {
+                                            "inputs": {
+                                                "name": "VISStatusRunning",
+                                                "value": false
+                                            },
+                                            "type": "SetVariable"
+                                        }
+                                    }
+                                },
+                                "expression": {
+                                    "and": [
+                                        {
+                                            "equals": [
+                                                "@variables('VISStatusRunning')",
+                                                "Running"
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "runAfter": {
+                                    "Until_VIS_is_in_running_state": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "If"
+                            },
+                            "Database_start_operation": {
                                 "actions": {
                                     "For_each_DB_instance_start": {
                                         "actions": {
+                                            "Check_if_database_instance_successfully_started": {
+                                                "actions": {},
+                                                "else": {
+                                                    "actions": {
+                                                        "Append_to_array_variable": {
+                                                            "inputs": {
+                                                                "name": "ErrorResourcesIfAny",
+                                                                "value": "@body('Read_current_status_of_database_instance')?['id']"
+                                                            },
+                                                            "type": "AppendToArrayVariable"
+                                                        },
+                                                        "Set_Logic_App_Success_to_false": {
+                                                            "inputs": {
+                                                                "name": "LogicAppSuccessExecution",
+                                                                "value": false
+                                                            },
+                                                            "runAfter": {
+                                                                "Append_to_array_variable": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
+                                                            "type": "SetVariable"
+                                                        }
+                                                    }
+                                                },
+                                                "expression": {
+                                                    "and": [
+                                                        {
+                                                            "equals": [
+                                                                "@variables('DbInstanceStatusRunning')",
+                                                                true
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                "runAfter": {
+                                                    "Check_if_database_is_running": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "If"
+                                            },
+                                            "Check_if_database_is_running": {
+                                                "actions": {
+                                                    "Set_success_for_DB_instance_running": {
+                                                        "inputs": {
+                                                            "name": "DbInstanceStatusRunning",
+                                                            "value": true
+                                                        },
+                                                        "type": "SetVariable"
+                                                    }
+                                                },
+                                                "else": {
+                                                    "actions": {
+                                                        "Set_failure_for_DB_Instance_running": {
+                                                            "inputs": {
+                                                                "name": "DbInstanceStatusRunning",
+                                                                "value": false
+                                                            },
+                                                            "type": "SetVariable"
+                                                        }
+                                                    }
+                                                },
+                                                "expression": {
+                                                    "and": [
+                                                        {
+                                                            "equals": [
+                                                                "@body('Parse_database_instance_details')?['properties']?['status']",
+                                                                "Running"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                "runAfter": {
+                                                    "Until": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "If"
+                                            },
                                             "Initiate_database_instance_start": {
                                                 "inputs": {
                                                     "body": {
@@ -628,6 +843,211 @@
                                                     }
                                                 },
                                                 "type": "ApiConnection"
+                                            },
+                                            "Reset_database_instance_running_variable": {
+                                                "inputs": {
+                                                    "name": "DbInstanceStatusRunning",
+                                                    "value": false
+                                                },
+                                                "runAfter": {
+                                                    "Check_if_database_instance_successfully_started": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "SetVariable"
+                                            },
+                                            "Until": {
+                                                "actions": {
+                                                    "Check_if_database_instance_state_is_offline": {
+                                                        "actions": {
+                                                            "Re-Initiate_database_instance_start": {
+                                                                "inputs": {
+                                                                    "body": {
+                                                                        "startVm": "@parameters('IncludeVirtualMachineOperation')"
+                                                                    },
+                                                                    "host": {
+                                                                        "connection": {
+                                                                            "name": "@parameters('$connections')['arm']['connectionId']"
+                                                                        }
+                                                                    },
+                                                                    "method": "post",
+                                                                    "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8],'/databaseinstances/',items('For_each_DB_instance_start')?['name'])}/@{encodeURIComponent(parameters('OperationName'))}",
+                                                                    "queries": {
+                                                                        "x-ms-api-version": "2023-10-01-preview"
+                                                                    }
+                                                                },
+                                                                "type": "ApiConnection"
+                                                            }
+                                                        },
+                                                        "else": {
+                                                            "actions": {}
+                                                        },
+                                                        "expression": {
+                                                            "and": [
+                                                                {
+                                                                    "equals": [
+                                                                        "@body('Parse_database_instance_details')?['properties']?['status']",
+                                                                        "Offline"
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        },
+                                                        "runAfter": {
+                                                            "Check_if_status_of_database_instance_is_running": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "If"
+                                                    },
+                                                    "Check_if_status_of_database_instance_is_running": {
+                                                        "actions": {
+                                                            "Set_DbInstanceStatusRunning_variable": {
+                                                                "inputs": {
+                                                                    "name": "DbInstanceStatusRunning",
+                                                                    "value": true
+                                                                },
+                                                                "type": "SetVariable"
+                                                            }
+                                                        },
+                                                        "else": {
+                                                            "actions": {
+                                                                "Delay": {
+                                                                    "inputs": {
+                                                                        "interval": {
+                                                                            "count": 5,
+                                                                            "unit": "Minute"
+                                                                        }
+                                                                    },
+                                                                    "type": "Wait"
+                                                                }
+                                                            }
+                                                        },
+                                                        "expression": {
+                                                            "and": [
+                                                                {
+                                                                    "equals": [
+                                                                        "@body('Parse_database_instance_details')?['properties']?['status']",
+                                                                        "Running"
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        },
+                                                        "runAfter": {
+                                                            "Parse_database_instance_details": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "If"
+                                                    },
+                                                    "Parse_database_instance_details": {
+                                                        "inputs": {
+                                                            "content": "@body('Read_current_status_of_database_instance')",
+                                                            "schema": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "location": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "properties": {
+                                                                        "properties": {
+                                                                            "databaseSid": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "databaseType": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "provisioningState": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "status": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "vmDetails": {
+                                                                                "items": {
+                                                                                    "properties": {
+                                                                                        "virtualMachineId": {
+                                                                                            "type": "string"
+                                                                                        }
+                                                                                    },
+                                                                                    "required": [
+                                                                                        "virtualMachineId"
+                                                                                    ],
+                                                                                    "type": "object"
+                                                                                },
+                                                                                "type": "array"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "systemData": {
+                                                                        "properties": {
+                                                                            "createdAt": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "createdBy": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "createdByType": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "lastModifiedAt": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "lastModifiedBy": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "lastModifiedByType": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "type": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "runAfter": {
+                                                            "Read_current_status_of_database_instance": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "ParseJson"
+                                                    },
+                                                    "Read_current_status_of_database_instance": {
+                                                        "inputs": {
+                                                            "host": {
+                                                                "connection": {
+                                                                    "name": "@parameters('$connections')['arm-1']['connectionId']"
+                                                                }
+                                                            },
+                                                            "method": "get",
+                                                            "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8],'/databaseInstances/',item()?['name'])}",
+                                                            "queries": {
+                                                                "x-ms-api-version": "2023-10-01-preview"
+                                                            }
+                                                        },
+                                                        "type": "ApiConnection"
+                                                    }
+                                                },
+                                                "expression": "@equals(variables('DbInstanceStatusRunning'),false)",
+                                                "limit": {
+                                                    "count": 30,
+                                                    "timeout": "PT1H"
+                                                },
+                                                "runAfter": {
+                                                    "Initiate_database_instance_start": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "Until"
                                             }
                                         },
                                         "foreach": "@body('Parse_database_instance_start_operation_response')?['value']",
@@ -811,11 +1231,463 @@
                                     }
                                 },
                                 "runAfter": {
-                                    "Database_start_operation-copy-copy": [
+                                    "Database_start_operation": [
                                         "Succeeded"
                                     ]
                                 },
                                 "type": "ApiConnection"
+                            },
+                            "Reset_VIS_Status_running_variable": {
+                                "inputs": {
+                                    "name": "VISStatusRunning",
+                                    "value": false
+                                },
+                                "runAfter": {
+                                    "Check_if_VIS_is_running_": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "SetVariable"
+                            },
+                            "Until_VIS_is_in_running_state": {
+                                "actions": {
+                                    "Check_if_VIS_is_running": {
+                                        "actions": {},
+                                        "else": {
+                                            "actions": {
+                                                "Set_VIS_Status_for_Running_to_true": {
+                                                    "inputs": {
+                                                        "name": "VISStatusRunning",
+                                                        "value": true
+                                                    },
+                                                    "type": "SetVariable"
+                                                }
+                                            }
+                                        },
+                                        "expression": {
+                                            "and": [
+                                                {
+                                                    "equals": [
+                                                        "@body('Parse_VIS_Details_for_status')?['properties']?['status']",
+                                                        "Running"
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "runAfter": {
+                                            "Parse_VIS_Details_for_status": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "If"
+                                    },
+                                    "Parse_VIS_Details_for_status": {
+                                        "inputs": {
+                                            "content": "@body('Read_current_status_of_VIS__to_check_if_running')",
+                                            "schema": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "identity": {
+                                                        "properties": {
+                                                            "type": {
+                                                                "type": "string"
+                                                            },
+                                                            "userAssignedIdentities": {
+                                                                "properties": {
+                                                                    "/subscriptions/49d64d54-e966-4c46-a868-1999802b762c/resourcegroups/ajgupt-test/providers/Microsoft.ManagedIdentity/userAssignedIdentities/ajgupttest": {
+                                                                        "properties": {
+                                                                            "clientId": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "principalId": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "location": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "properties": {
+                                                        "properties": {
+                                                            "configuration": {
+                                                                "properties": {
+                                                                    "appLocation": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "configurationType": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "infrastructureConfiguration": {
+                                                                        "properties": {
+                                                                            "appResourceGroup": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "applicationServer": {
+                                                                                "properties": {
+                                                                                    "instanceCount": {
+                                                                                        "type": "integer"
+                                                                                    },
+                                                                                    "subnetId": {
+                                                                                        "type": "string"
+                                                                                    },
+                                                                                    "virtualMachineConfiguration": {
+                                                                                        "properties": {
+                                                                                            "imageReference": {
+                                                                                                "properties": {
+                                                                                                    "offer": {
+                                                                                                        "type": "string"
+                                                                                                    },
+                                                                                                    "publisher": {
+                                                                                                        "type": "string"
+                                                                                                    },
+                                                                                                    "sku": {
+                                                                                                        "type": "string"
+                                                                                                    },
+                                                                                                    "version": {
+                                                                                                        "type": "string"
+                                                                                                    }
+                                                                                                },
+                                                                                                "type": "object"
+                                                                                            },
+                                                                                            "osProfile": {
+                                                                                                "properties": {
+                                                                                                    "adminUsername": {
+                                                                                                        "type": "string"
+                                                                                                    },
+                                                                                                    "osConfiguration": {
+                                                                                                        "properties": {
+                                                                                                            "disablePasswordAuthentication": {
+                                                                                                                "type": "boolean"
+                                                                                                            },
+                                                                                                            "osType": {
+                                                                                                                "type": "string"
+                                                                                                            },
+                                                                                                            "sshKeyPair": {
+                                                                                                                "properties": {
+                                                                                                                    "publicKey": {
+                                                                                                                        "type": "string"
+                                                                                                                    }
+                                                                                                                },
+                                                                                                                "type": "object"
+                                                                                                            }
+                                                                                                        },
+                                                                                                        "type": "object"
+                                                                                                    }
+                                                                                                },
+                                                                                                "type": "object"
+                                                                                            },
+                                                                                            "vmSize": {
+                                                                                                "type": "string"
+                                                                                            }
+                                                                                        },
+                                                                                        "type": "object"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            },
+                                                                            "centralServer": {
+                                                                                "properties": {
+                                                                                    "instanceCount": {
+                                                                                        "type": "integer"
+                                                                                    },
+                                                                                    "subnetId": {
+                                                                                        "type": "string"
+                                                                                    },
+                                                                                    "virtualMachineConfiguration": {
+                                                                                        "properties": {
+                                                                                            "imageReference": {
+                                                                                                "properties": {
+                                                                                                    "offer": {
+                                                                                                        "type": "string"
+                                                                                                    },
+                                                                                                    "publisher": {
+                                                                                                        "type": "string"
+                                                                                                    },
+                                                                                                    "sku": {
+                                                                                                        "type": "string"
+                                                                                                    },
+                                                                                                    "version": {
+                                                                                                        "type": "string"
+                                                                                                    }
+                                                                                                },
+                                                                                                "type": "object"
+                                                                                            },
+                                                                                            "osProfile": {
+                                                                                                "properties": {
+                                                                                                    "adminUsername": {
+                                                                                                        "type": "string"
+                                                                                                    },
+                                                                                                    "osConfiguration": {
+                                                                                                        "properties": {
+                                                                                                            "disablePasswordAuthentication": {
+                                                                                                                "type": "boolean"
+                                                                                                            },
+                                                                                                            "osType": {
+                                                                                                                "type": "string"
+                                                                                                            },
+                                                                                                            "sshKeyPair": {
+                                                                                                                "properties": {
+                                                                                                                    "publicKey": {
+                                                                                                                        "type": "string"
+                                                                                                                    }
+                                                                                                                },
+                                                                                                                "type": "object"
+                                                                                                            }
+                                                                                                        },
+                                                                                                        "type": "object"
+                                                                                                    }
+                                                                                                },
+                                                                                                "type": "object"
+                                                                                            },
+                                                                                            "vmSize": {
+                                                                                                "type": "string"
+                                                                                            }
+                                                                                        },
+                                                                                        "type": "object"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            },
+                                                                            "databaseServer": {
+                                                                                "properties": {
+                                                                                    "instanceCount": {
+                                                                                        "type": "integer"
+                                                                                    },
+                                                                                    "subnetId": {
+                                                                                        "type": "string"
+                                                                                    },
+                                                                                    "virtualMachineConfiguration": {
+                                                                                        "properties": {
+                                                                                            "imageReference": {
+                                                                                                "properties": {
+                                                                                                    "offer": {
+                                                                                                        "type": "string"
+                                                                                                    },
+                                                                                                    "publisher": {
+                                                                                                        "type": "string"
+                                                                                                    },
+                                                                                                    "sku": {
+                                                                                                        "type": "string"
+                                                                                                    },
+                                                                                                    "version": {
+                                                                                                        "type": "string"
+                                                                                                    }
+                                                                                                },
+                                                                                                "type": "object"
+                                                                                            },
+                                                                                            "osProfile": {
+                                                                                                "properties": {
+                                                                                                    "adminUsername": {
+                                                                                                        "type": "string"
+                                                                                                    },
+                                                                                                    "osConfiguration": {
+                                                                                                        "properties": {
+                                                                                                            "disablePasswordAuthentication": {
+                                                                                                                "type": "boolean"
+                                                                                                            },
+                                                                                                            "osType": {
+                                                                                                                "type": "string"
+                                                                                                            },
+                                                                                                            "sshKeyPair": {
+                                                                                                                "properties": {
+                                                                                                                    "publicKey": {
+                                                                                                                        "type": "string"
+                                                                                                                    }
+                                                                                                                },
+                                                                                                                "type": "object"
+                                                                                                            }
+                                                                                                        },
+                                                                                                        "type": "object"
+                                                                                                    }
+                                                                                                },
+                                                                                                "type": "object"
+                                                                                            },
+                                                                                            "vmSize": {
+                                                                                                "type": "string"
+                                                                                            }
+                                                                                        },
+                                                                                        "type": "object"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            },
+                                                                            "deploymentType": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "highAvailabilityConfig": {
+                                                                                "properties": {
+                                                                                    "highAvailabilityType": {
+                                                                                        "type": "string"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            },
+                                                                            "storageConfiguration": {
+                                                                                "properties": {
+                                                                                    "transportFileShareConfiguration": {
+                                                                                        "properties": {
+                                                                                            "configurationType": {
+                                                                                                "type": "string"
+                                                                                            },
+                                                                                            "resourceGroup": {
+                                                                                                "type": "string"
+                                                                                            },
+                                                                                            "storageAccountName": {
+                                                                                                "type": "string"
+                                                                                            }
+                                                                                        },
+                                                                                        "type": "object"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "osSapConfiguration": {
+                                                                        "properties": {
+                                                                            "sapFqdn": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "softwareConfiguration": {
+                                                                        "properties": {
+                                                                            "bomUrl": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "highAvailabilitySoftwareConfiguration": {
+                                                                                "properties": {
+                                                                                    "fencingClientId": {
+                                                                                        "type": "string"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            },
+                                                                            "sapBitsStorageAccountId": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "softwareInstallationType": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "softwareVersion": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "environment": {
+                                                                "type": "string"
+                                                            },
+                                                            "health": {
+                                                                "type": "string"
+                                                            },
+                                                            "managedResourceGroupConfiguration": {
+                                                                "properties": {
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "managedResourcesNetworkAccessType": {
+                                                                "type": "string"
+                                                            },
+                                                            "provisioningState": {
+                                                                "type": "string"
+                                                            },
+                                                            "sapProduct": {
+                                                                "type": "string"
+                                                            },
+                                                            "state": {
+                                                                "type": "string"
+                                                            },
+                                                            "status": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "systemData": {
+                                                        "properties": {
+                                                            "createdAt": {
+                                                                "type": "string"
+                                                            },
+                                                            "createdBy": {
+                                                                "type": "string"
+                                                            },
+                                                            "createdByType": {
+                                                                "type": "string"
+                                                            },
+                                                            "lastModifiedAt": {
+                                                                "type": "string"
+                                                            },
+                                                            "lastModifiedBy": {
+                                                                "type": "string"
+                                                            },
+                                                            "lastModifiedByType": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "type": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "runAfter": {
+                                            "Read_current_status_of_VIS__to_check_if_running": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "ParseJson"
+                                    },
+                                    "Read_current_status_of_VIS__to_check_if_running": {
+                                        "inputs": {
+                                            "host": {
+                                                "connection": {
+                                                    "name": "@parameters('$connections')['arm-1']['connectionId']"
+                                                }
+                                            },
+                                            "method": "get",
+                                            "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8])}",
+                                            "queries": {
+                                                "x-ms-api-version": "2023-10-01-preview"
+                                            }
+                                        },
+                                        "type": "ApiConnection"
+                                    }
+                                },
+                                "expression": "@equals(variables('VISStatusRunning'),true)",
+                                "limit": {
+                                    "count": 20,
+                                    "timeout": "PT1H"
+                                },
+                                "runAfter": {
+                                    "Assume_VIS_Running_to_be_false": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "Until"
                             }
                         },
                         "foreach": "@parameters('ResourceName')",
@@ -831,10 +1703,113 @@
                     "actions": {
                         "For_each_VIS_resource_stop": {
                             "actions": {
+                                "Assume_VIS_Running_to_true_": {
+                                    "inputs": {
+                                        "name": "VISStatusRunning",
+                                        "value": true
+                                    },
+                                    "runAfter": {
+                                        "Delay_until": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "SetVariable"
+                                },
+                                "Check_if_VIS_is_stopped": {
+                                    "actions": {},
+                                    "else": {
+                                        "actions": {
+                                            "Append_to_array_with_Error-Containing_Resources_": {
+                                                "inputs": {
+                                                    "name": "ErrorResourcesIfAny",
+                                                    "value": "@body('Read_current_status_of_VIS')?['name']"
+                                                },
+                                                "type": "AppendToArrayVariable"
+                                            },
+                                            "Set_Logic_App_Success_to_false_for_stop": {
+                                                "inputs": {
+                                                    "name": "LogicAppSuccessExecution",
+                                                    "value": false
+                                                },
+                                                "runAfter": {
+                                                    "Append_to_array_with_Error-Containing_Resources_": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "SetVariable"
+                                            }
+                                        }
+                                    },
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "equals": [
+                                                    "@variables('VISStatusRunning')",
+                                                    false
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "runAfter": {
+                                        "Until_VIS_is_running": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "If"
+                                },
                                 "Database_stop_operation": {
                                     "actions": {
                                         "For_each_DB_instance_stop": {
                                             "actions": {
+                                                "Assume_Db_Instance_is_running": {
+                                                    "inputs": {
+                                                        "name": "DbInstanceStatusRunning",
+                                                        "value": true
+                                                    },
+                                                    "type": "SetVariable"
+                                                },
+                                                "Check_if_Db_instance_has_successfully_stopped": {
+                                                    "actions": {},
+                                                    "else": {
+                                                        "actions": {
+                                                            "Append_to_array_for_error_resources": {
+                                                                "inputs": {
+                                                                    "name": "ErrorResourcesIfAny",
+                                                                    "value": "@body('Read_current_status_of_database_instance_for_stop')?['id']"
+                                                                },
+                                                                "type": "AppendToArrayVariable"
+                                                            },
+                                                            "Set_variable_1": {
+                                                                "inputs": {
+                                                                    "name": "LogicAppSuccessExecution",
+                                                                    "value": false
+                                                                },
+                                                                "runAfter": {
+                                                                    "Append_to_array_for_error_resources": [
+                                                                        "Succeeded"
+                                                                    ]
+                                                                },
+                                                                "type": "SetVariable"
+                                                            }
+                                                        }
+                                                    },
+                                                    "expression": {
+                                                        "and": [
+                                                            {
+                                                                "equals": [
+                                                                    "@variables('DbInstanceStatusRunning')",
+                                                                    false
+                                                                ]
+                                                            }
+                                                        ]
+                                                    },
+                                                    "runAfter": {
+                                                        "Until_Db_Instance_has_stopped": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "If"
+                                                },
                                                 "Initiate_database_instance_stop": {
                                                     "inputs": {
                                                         "body": {
@@ -852,7 +1827,156 @@
                                                             "x-ms-api-version": "2023-10-01-preview"
                                                         }
                                                     },
+                                                    "runAfter": {
+                                                        "Assume_Db_Instance_is_running": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
                                                     "type": "ApiConnection"
+                                                },
+                                                "Until_Db_Instance_has_stopped": {
+                                                    "actions": {
+                                                        "Check_if_database_instance_is_not_running": {
+                                                            "actions": {
+                                                                "Check_if_DB_instance_has_stopped": {
+                                                                    "inputs": {
+                                                                        "name": "DbInstanceStatusRunning",
+                                                                        "value": false
+                                                                    },
+                                                                    "type": "SetVariable"
+                                                                }
+                                                            },
+                                                            "else": {
+                                                                "actions": {}
+                                                            },
+                                                            "expression": {
+                                                                "and": [
+                                                                    {
+                                                                        "not": {
+                                                                            "equals": [
+                                                                                "@body('Parse_db_instance_details')?['properties']?['status']",
+                                                                                "Running"
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            },
+                                                            "runAfter": {
+                                                                "Parse_db_instance_details": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
+                                                            "type": "If"
+                                                        },
+                                                        "Parse_db_instance_details": {
+                                                            "inputs": {
+                                                                "content": "@body('Read_current_status_of_database_instance_for_stop')",
+                                                                "schema": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "location": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "name": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "properties": {
+                                                                            "properties": {
+                                                                                "databaseSid": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "databaseType": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "provisioningState": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "status": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "vmDetails": {
+                                                                                    "items": {
+                                                                                        "properties": {
+                                                                                            "virtualMachineId": {
+                                                                                                "type": "string"
+                                                                                            }
+                                                                                        },
+                                                                                        "required": [
+                                                                                            "virtualMachineId"
+                                                                                        ],
+                                                                                        "type": "object"
+                                                                                    },
+                                                                                    "type": "array"
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        },
+                                                                        "systemData": {
+                                                                            "properties": {
+                                                                                "createdAt": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "createdBy": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "createdByType": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "lastModifiedAt": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "lastModifiedBy": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "lastModifiedByType": {
+                                                                                    "type": "string"
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        },
+                                                                        "type": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "runAfter": {
+                                                                "Read_current_status_of_database_instance_for_stop": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
+                                                            "type": "ParseJson"
+                                                        },
+                                                        "Read_current_status_of_database_instance_for_stop": {
+                                                            "inputs": {
+                                                                "host": {
+                                                                    "connection": {
+                                                                        "name": "@parameters('$connections')['arm-1']['connectionId']"
+                                                                    }
+                                                                },
+                                                                "method": "get",
+                                                                "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_stop'), '/')[8],'/databaseInstances/',item()?['name'])}",
+                                                                "queries": {
+                                                                    "x-ms-api-version": "2023-10-01-preview"
+                                                                }
+                                                            },
+                                                            "type": "ApiConnection"
+                                                        }
+                                                    },
+                                                    "expression": "@equals(variables('DbInstanceStatusRunning'),false)",
+                                                    "limit": {
+                                                        "count": 60,
+                                                        "timeout": "PT1H"
+                                                    },
+                                                    "runAfter": {
+                                                        "Initiate_database_instance_stop": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "Until"
                                                 }
                                             },
                                             "foreach": "@body('Parse_database_instance_stop_operation_response')?['value']",
@@ -1008,11 +2132,17 @@
                                                     "@parameters('IncludeDatabaseOperations')",
                                                     true
                                                 ]
+                                            },
+                                            {
+                                                "equals": [
+                                                    "@variables('LogicAppSuccessExecution')",
+                                                    true
+                                                ]
                                             }
                                         ]
                                     },
                                     "runAfter": {
-                                        "Delay_until": [
+                                        "Check_if_VIS_is_stopped": [
                                             "Succeeded"
                                         ]
                                     },
@@ -1048,6 +2178,446 @@
                                         }
                                     },
                                     "type": "ApiConnection"
+                                },
+                                "Until_VIS_is_running": {
+                                    "actions": {
+                                        "Check_if_VIS_has_stopped": {
+                                            "actions": {
+                                                "Set_VIS_Running_to_false": {
+                                                    "inputs": {
+                                                        "name": "VISStatusRunning",
+                                                        "value": false
+                                                    },
+                                                    "type": "SetVariable"
+                                                }
+                                            },
+                                            "else": {
+                                                "actions": {}
+                                            },
+                                            "expression": {
+                                                "or": [
+                                                    {
+                                                        "equals": [
+                                                            "@body('Parse_VIS_Details')?['properties']?['status']",
+                                                            "Offline"
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            "runAfter": {
+                                                "Parse_VIS_Details": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "If"
+                                        },
+                                        "Parse_VIS_Details": {
+                                            "inputs": {
+                                                "content": "@body('Read_current_status_of_VIS')",
+                                                "schema": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string"
+                                                        },
+                                                        "identity": {
+                                                            "properties": {
+                                                                "type": {
+                                                                    "type": "string"
+                                                                },
+                                                                "userAssignedIdentities": {
+                                                                    "properties": {
+                                                                        "/subscriptions/49d64d54-e966-4c46-a868-1999802b762c/resourcegroups/ajgupt-test/providers/Microsoft.ManagedIdentity/userAssignedIdentities/ajgupttest": {
+                                                                            "properties": {
+                                                                                "clientId": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "principalId": {
+                                                                                    "type": "string"
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "location": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "properties": {
+                                                            "properties": {
+                                                                "configuration": {
+                                                                    "properties": {
+                                                                        "appLocation": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "configurationType": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "infrastructureConfiguration": {
+                                                                            "properties": {
+                                                                                "appResourceGroup": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "applicationServer": {
+                                                                                    "properties": {
+                                                                                        "instanceCount": {
+                                                                                            "type": "integer"
+                                                                                        },
+                                                                                        "subnetId": {
+                                                                                            "type": "string"
+                                                                                        },
+                                                                                        "virtualMachineConfiguration": {
+                                                                                            "properties": {
+                                                                                                "imageReference": {
+                                                                                                    "properties": {
+                                                                                                        "offer": {
+                                                                                                            "type": "string"
+                                                                                                        },
+                                                                                                        "publisher": {
+                                                                                                            "type": "string"
+                                                                                                        },
+                                                                                                        "sku": {
+                                                                                                            "type": "string"
+                                                                                                        },
+                                                                                                        "version": {
+                                                                                                            "type": "string"
+                                                                                                        }
+                                                                                                    },
+                                                                                                    "type": "object"
+                                                                                                },
+                                                                                                "osProfile": {
+                                                                                                    "properties": {
+                                                                                                        "adminUsername": {
+                                                                                                            "type": "string"
+                                                                                                        },
+                                                                                                        "osConfiguration": {
+                                                                                                            "properties": {
+                                                                                                                "disablePasswordAuthentication": {
+                                                                                                                    "type": "boolean"
+                                                                                                                },
+                                                                                                                "osType": {
+                                                                                                                    "type": "string"
+                                                                                                                },
+                                                                                                                "sshKeyPair": {
+                                                                                                                    "properties": {
+                                                                                                                        "publicKey": {
+                                                                                                                            "type": "string"
+                                                                                                                        }
+                                                                                                                    },
+                                                                                                                    "type": "object"
+                                                                                                                }
+                                                                                                            },
+                                                                                                            "type": "object"
+                                                                                                        }
+                                                                                                    },
+                                                                                                    "type": "object"
+                                                                                                },
+                                                                                                "vmSize": {
+                                                                                                    "type": "string"
+                                                                                                }
+                                                                                            },
+                                                                                            "type": "object"
+                                                                                        }
+                                                                                    },
+                                                                                    "type": "object"
+                                                                                },
+                                                                                "centralServer": {
+                                                                                    "properties": {
+                                                                                        "instanceCount": {
+                                                                                            "type": "integer"
+                                                                                        },
+                                                                                        "subnetId": {
+                                                                                            "type": "string"
+                                                                                        },
+                                                                                        "virtualMachineConfiguration": {
+                                                                                            "properties": {
+                                                                                                "imageReference": {
+                                                                                                    "properties": {
+                                                                                                        "offer": {
+                                                                                                            "type": "string"
+                                                                                                        },
+                                                                                                        "publisher": {
+                                                                                                            "type": "string"
+                                                                                                        },
+                                                                                                        "sku": {
+                                                                                                            "type": "string"
+                                                                                                        },
+                                                                                                        "version": {
+                                                                                                            "type": "string"
+                                                                                                        }
+                                                                                                    },
+                                                                                                    "type": "object"
+                                                                                                },
+                                                                                                "osProfile": {
+                                                                                                    "properties": {
+                                                                                                        "adminUsername": {
+                                                                                                            "type": "string"
+                                                                                                        },
+                                                                                                        "osConfiguration": {
+                                                                                                            "properties": {
+                                                                                                                "disablePasswordAuthentication": {
+                                                                                                                    "type": "boolean"
+                                                                                                                },
+                                                                                                                "osType": {
+                                                                                                                    "type": "string"
+                                                                                                                },
+                                                                                                                "sshKeyPair": {
+                                                                                                                    "properties": {
+                                                                                                                        "publicKey": {
+                                                                                                                            "type": "string"
+                                                                                                                        }
+                                                                                                                    },
+                                                                                                                    "type": "object"
+                                                                                                                }
+                                                                                                            },
+                                                                                                            "type": "object"
+                                                                                                        }
+                                                                                                    },
+                                                                                                    "type": "object"
+                                                                                                },
+                                                                                                "vmSize": {
+                                                                                                    "type": "string"
+                                                                                                }
+                                                                                            },
+                                                                                            "type": "object"
+                                                                                        }
+                                                                                    },
+                                                                                    "type": "object"
+                                                                                },
+                                                                                "databaseServer": {
+                                                                                    "properties": {
+                                                                                        "instanceCount": {
+                                                                                            "type": "integer"
+                                                                                        },
+                                                                                        "subnetId": {
+                                                                                            "type": "string"
+                                                                                        },
+                                                                                        "virtualMachineConfiguration": {
+                                                                                            "properties": {
+                                                                                                "imageReference": {
+                                                                                                    "properties": {
+                                                                                                        "offer": {
+                                                                                                            "type": "string"
+                                                                                                        },
+                                                                                                        "publisher": {
+                                                                                                            "type": "string"
+                                                                                                        },
+                                                                                                        "sku": {
+                                                                                                            "type": "string"
+                                                                                                        },
+                                                                                                        "version": {
+                                                                                                            "type": "string"
+                                                                                                        }
+                                                                                                    },
+                                                                                                    "type": "object"
+                                                                                                },
+                                                                                                "osProfile": {
+                                                                                                    "properties": {
+                                                                                                        "adminUsername": {
+                                                                                                            "type": "string"
+                                                                                                        },
+                                                                                                        "osConfiguration": {
+                                                                                                            "properties": {
+                                                                                                                "disablePasswordAuthentication": {
+                                                                                                                    "type": "boolean"
+                                                                                                                },
+                                                                                                                "osType": {
+                                                                                                                    "type": "string"
+                                                                                                                },
+                                                                                                                "sshKeyPair": {
+                                                                                                                    "properties": {
+                                                                                                                        "publicKey": {
+                                                                                                                            "type": "string"
+                                                                                                                        }
+                                                                                                                    },
+                                                                                                                    "type": "object"
+                                                                                                                }
+                                                                                                            },
+                                                                                                            "type": "object"
+                                                                                                        }
+                                                                                                    },
+                                                                                                    "type": "object"
+                                                                                                },
+                                                                                                "vmSize": {
+                                                                                                    "type": "string"
+                                                                                                }
+                                                                                            },
+                                                                                            "type": "object"
+                                                                                        }
+                                                                                    },
+                                                                                    "type": "object"
+                                                                                },
+                                                                                "deploymentType": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "highAvailabilityConfig": {
+                                                                                    "properties": {
+                                                                                        "highAvailabilityType": {
+                                                                                            "type": "string"
+                                                                                        }
+                                                                                    },
+                                                                                    "type": "object"
+                                                                                },
+                                                                                "storageConfiguration": {
+                                                                                    "properties": {
+                                                                                        "transportFileShareConfiguration": {
+                                                                                            "properties": {
+                                                                                                "configurationType": {
+                                                                                                    "type": "string"
+                                                                                                },
+                                                                                                "resourceGroup": {
+                                                                                                    "type": "string"
+                                                                                                },
+                                                                                                "storageAccountName": {
+                                                                                                    "type": "string"
+                                                                                                }
+                                                                                            },
+                                                                                            "type": "object"
+                                                                                        }
+                                                                                    },
+                                                                                    "type": "object"
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        },
+                                                                        "osSapConfiguration": {
+                                                                            "properties": {
+                                                                                "sapFqdn": {
+                                                                                    "type": "string"
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        },
+                                                                        "softwareConfiguration": {
+                                                                            "properties": {
+                                                                                "bomUrl": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "highAvailabilitySoftwareConfiguration": {
+                                                                                    "properties": {
+                                                                                        "fencingClientId": {
+                                                                                            "type": "string"
+                                                                                        }
+                                                                                    },
+                                                                                    "type": "object"
+                                                                                },
+                                                                                "sapBitsStorageAccountId": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "softwareInstallationType": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "softwareVersion": {
+                                                                                    "type": "string"
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                },
+                                                                "environment": {
+                                                                    "type": "string"
+                                                                },
+                                                                "health": {
+                                                                    "type": "string"
+                                                                },
+                                                                "managedResourceGroupConfiguration": {
+                                                                    "properties": {
+                                                                        "name": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                },
+                                                                "managedResourcesNetworkAccessType": {
+                                                                    "type": "string"
+                                                                },
+                                                                "provisioningState": {
+                                                                    "type": "string"
+                                                                },
+                                                                "sapProduct": {
+                                                                    "type": "string"
+                                                                },
+                                                                "state": {
+                                                                    "type": "string"
+                                                                },
+                                                                "status": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "systemData": {
+                                                            "properties": {
+                                                                "createdAt": {
+                                                                    "type": "string"
+                                                                },
+                                                                "createdBy": {
+                                                                    "type": "string"
+                                                                },
+                                                                "createdByType": {
+                                                                    "type": "string"
+                                                                },
+                                                                "lastModifiedAt": {
+                                                                    "type": "string"
+                                                                },
+                                                                "lastModifiedBy": {
+                                                                    "type": "string"
+                                                                },
+                                                                "lastModifiedByType": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "type": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "runAfter": {
+                                                "Read_current_status_of_VIS": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "ParseJson"
+                                        },
+                                        "Read_current_status_of_VIS": {
+                                            "inputs": {
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['arm-1']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "get",
+                                                "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_stop'), '/')[8])}",
+                                                "queries": {
+                                                    "x-ms-api-version": "2023-10-01-preview"
+                                                }
+                                            },
+                                            "type": "ApiConnection"
+                                        }
+                                    },
+                                    "expression": "@equals(variables('VISStatusRunning'),true)",
+                                    "limit": {
+                                        "count": 20,
+                                        "timeout": "PT1H"
+                                    },
+                                    "runAfter": {
+                                        "Assume_VIS_Running_to_true_": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "Until"
                                 }
                             },
                             "foreach": "@parameters('ResourceName')",
@@ -1070,8 +2640,29 @@
                         }
                     ]
                 },
-                "runAfter": {},
+                "runAfter": {
+                    "Resources_with_errors,_if_any": [
+                        "Succeeded"
+                    ]
+                },
                 "type": "If"
+            },
+            "VIS_Running_Status": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "VISStatusRunning",
+                            "type": "boolean",
+                            "value": false
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Database_Instance_Running_Status": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
             }
         }
   },
