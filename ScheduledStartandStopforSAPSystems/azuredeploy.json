@@ -593,12 +593,6 @@
                                 "@parameters('OperationName')",
                                 "stop"
                             ]
-                        },
-                        {
-                            "equals": [
-                                "@variables('LogicAppSuccessExecution')",
-                                true
-                            ]
                         }
                     ]
                 },
@@ -716,10 +710,22 @@
                                 "actions": {},
                                 "else": {
                                     "actions": {
-                                        "Set_VIS_Status_of_Running_to_false": {
+                                        "Append_VIS_Details_to_error_array": {
                                             "inputs": {
-                                                "name": "VISStatusRunning",
+                                                "name": "ErrorResourcesIfAny",
+                                                "value": "@body('Read_current_status_of_VIS__to_check_if_running')?['id']"
+                                            },
+                                            "type": "AppendToArrayVariable"
+                                        },
+                                        "Set_Logic_App_Success_to_false_because_VIS_Start_failed": {
+                                            "inputs": {
+                                                "name": "LogicAppSuccessExecution",
                                                 "value": false
+                                            },
+                                            "runAfter": {
+                                                "Append_VIS_Details_to_error_array": [
+                                                    "Succeeded"
+                                                ]
                                             },
                                             "type": "SetVariable"
                                         }
@@ -730,7 +736,7 @@
                                         {
                                             "equals": [
                                                 "@variables('VISStatusRunning')",
-                                                "Running"
+                                                true
                                             ]
                                         }
                                     ]
@@ -746,24 +752,36 @@
                                 "actions": {
                                     "For_each_DB_instance_start": {
                                         "actions": {
-                                            "Check_if_database_instance_successfully_started": {
+                                            "Assuming_DB_Instance_is_not_running": {
+                                                "inputs": {
+                                                    "name": "DbInstanceStatusRunning",
+                                                    "value": false
+                                                },
+                                                "runAfter": {
+                                                    "Wait_for_10_minutes_for_VM_Agent_to_come_up_on_DB_VMs": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "SetVariable"
+                                            },
+                                            "Check_if_database_instance_successfully_started_1": {
                                                 "actions": {},
                                                 "else": {
                                                     "actions": {
-                                                        "Append_to_array_variable": {
+                                                        "Append_DB_Instance_details_to_Error_Array": {
                                                             "inputs": {
                                                                 "name": "ErrorResourcesIfAny",
-                                                                "value": "@body('Read_current_status_of_database_instance')?['id']"
+                                                                "value": "@item()?['id']"
                                                             },
                                                             "type": "AppendToArrayVariable"
                                                         },
-                                                        "Set_Logic_App_Success_to_false": {
+                                                        "Set_Logic_App_Success_to_false_as_DB_Instance_is_not_running": {
                                                             "inputs": {
                                                                 "name": "LogicAppSuccessExecution",
                                                                 "value": false
                                                             },
                                                             "runAfter": {
-                                                                "Append_to_array_variable": [
+                                                                "Append_DB_Instance_details_to_Error_Array": [
                                                                     "Succeeded"
                                                                 ]
                                                             },
@@ -782,75 +800,60 @@
                                                     ]
                                                 },
                                                 "runAfter": {
-                                                    "Check_if_database_is_running": [
-                                                        "Succeeded"
-                                                    ]
-                                                },
-                                                "type": "If"
-                                            },
-                                            "Check_if_database_is_running": {
-                                                "actions": {
-                                                    "Set_success_for_DB_instance_running": {
-                                                        "inputs": {
-                                                            "name": "DbInstanceStatusRunning",
-                                                            "value": true
-                                                        },
-                                                        "type": "SetVariable"
-                                                    }
-                                                },
-                                                "else": {
-                                                    "actions": {
-                                                        "Set_failure_for_DB_Instance_running": {
-                                                            "inputs": {
-                                                                "name": "DbInstanceStatusRunning",
-                                                                "value": false
-                                                            },
-                                                            "type": "SetVariable"
-                                                        }
-                                                    }
-                                                },
-                                                "expression": {
-                                                    "and": [
-                                                        {
-                                                            "equals": [
-                                                                "@body('Parse_database_instance_details')?['properties']?['status']",
-                                                                "Running"
-                                                            ]
-                                                        }
-                                                    ]
-                                                },
-                                                "runAfter": {
                                                     "Until": [
                                                         "Succeeded"
                                                     ]
                                                 },
                                                 "type": "If"
                                             },
+                                            "For_each_Db_VM_start": {
+                                                "actions": {
+                                                    "Invoke_Start_Operation_on_database_VM": {
+                                                        "inputs": {
+                                                            "host": {
+                                                                "connection": {
+                                                                    "name": "@parameters('$connections')['arm']['connectionId']"
+                                                                }
+                                                            },
+                                                            "method": "post",
+                                                            "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_Db_VM_start')['virtualMachineId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_Db_VM_start')['virtualMachineId'], '/')[4])}/providers/@{encodeURIComponent('Microsoft.Compute')}/@{encodeURIComponent('virtualMachines/',split(items('For_each_Db_VM_start')['virtualMachineId'], '/')[8])}/@{encodeURIComponent('start')}",
+                                                            "queries": {
+                                                                "x-ms-api-version": "2019-12-01"
+                                                            }
+                                                        },
+                                                        "type": "ApiConnection"
+                                                    }
+                                                },
+                                                "foreach": "@item()?['properties']?['vmDetails']",
+                                                "type": "Foreach"
+                                            },
                                             "Initiate_database_instance_start": {
                                                 "inputs": {
-                                                    "body": {
-                                                        "startVm": "@parameters('IncludeVirtualMachineOperation')"
-                                                    },
                                                     "host": {
                                                         "connection": {
                                                             "name": "@parameters('$connections')['arm']['connectionId']"
                                                         }
                                                     },
                                                     "method": "post",
-                                                    "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8],'/databaseinstances/',items('For_each_DB_instance_start')?['name'])}/@{encodeURIComponent(parameters('OperationName'))}",
+                                                    "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8],'/databaseinstances/',item()?['name'])}/@{encodeURIComponent(parameters('OperationName'))}",
                                                     "queries": {
                                                         "x-ms-api-version": "2023-10-01-preview"
                                                     }
                                                 },
+                                                "runAfter": {
+                                                    "Assuming_DB_Instance_is_not_running": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
                                                 "type": "ApiConnection"
                                             },
-                                            "Reset_database_instance_running_variable": {
+                                            "Reset_database_instance_running_variable_for_next_start_operation": {
                                                 "inputs": {
                                                     "name": "DbInstanceStatusRunning",
                                                     "value": false
                                                 },
                                                 "runAfter": {
-                                                    "Check_if_database_instance_successfully_started": [
+                                                    "Check_if_database_instance_successfully_started_1": [
                                                         "Succeeded"
                                                     ]
                                                 },
@@ -858,90 +861,9 @@
                                             },
                                             "Until": {
                                                 "actions": {
-                                                    "Check_if_database_instance_state_is_offline": {
-                                                        "actions": {
-                                                            "Re-Initiate_database_instance_start": {
-                                                                "inputs": {
-                                                                    "body": {
-                                                                        "startVm": "@parameters('IncludeVirtualMachineOperation')"
-                                                                    },
-                                                                    "host": {
-                                                                        "connection": {
-                                                                            "name": "@parameters('$connections')['arm']['connectionId']"
-                                                                        }
-                                                                    },
-                                                                    "method": "post",
-                                                                    "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8],'/databaseinstances/',items('For_each_DB_instance_start')?['name'])}/@{encodeURIComponent(parameters('OperationName'))}",
-                                                                    "queries": {
-                                                                        "x-ms-api-version": "2023-10-01-preview"
-                                                                    }
-                                                                },
-                                                                "type": "ApiConnection"
-                                                            }
-                                                        },
-                                                        "else": {
-                                                            "actions": {}
-                                                        },
-                                                        "expression": {
-                                                            "and": [
-                                                                {
-                                                                    "equals": [
-                                                                        "@body('Parse_database_instance_details')?['properties']?['status']",
-                                                                        "Offline"
-                                                                    ]
-                                                                }
-                                                            ]
-                                                        },
-                                                        "runAfter": {
-                                                            "Check_if_status_of_database_instance_is_running": [
-                                                                "Succeeded"
-                                                            ]
-                                                        },
-                                                        "type": "If"
-                                                    },
-                                                    "Check_if_status_of_database_instance_is_running": {
-                                                        "actions": {
-                                                            "Set_DbInstanceStatusRunning_variable": {
-                                                                "inputs": {
-                                                                    "name": "DbInstanceStatusRunning",
-                                                                    "value": true
-                                                                },
-                                                                "type": "SetVariable"
-                                                            }
-                                                        },
-                                                        "else": {
-                                                            "actions": {
-                                                                "Delay": {
-                                                                    "inputs": {
-                                                                        "interval": {
-                                                                            "count": 5,
-                                                                            "unit": "Minute"
-                                                                        }
-                                                                    },
-                                                                    "type": "Wait"
-                                                                }
-                                                            }
-                                                        },
-                                                        "expression": {
-                                                            "and": [
-                                                                {
-                                                                    "equals": [
-                                                                        "@body('Parse_database_instance_details')?['properties']?['status']",
-                                                                        "Running"
-                                                                    ]
-                                                                }
-                                                            ]
-                                                        },
-                                                        "runAfter": {
-                                                            "Parse_database_instance_details": [
-                                                                "Succeeded"
-                                                            ]
-                                                        },
-                                                        "type": "If"
-                                                    },
-                                                    "Parse_database_instance_details": {
+                                                    "Parse_db_instance_status": {
                                                         "inputs": {
-                                                            "content": "@body('Read_current_status_of_database_instance')",
+                                                            "content": "@body('Read_db_instance_status')",
                                                             "schema": {
                                                                 "properties": {
                                                                     "id": {
@@ -961,10 +883,16 @@
                                                                             "databaseType": {
                                                                                 "type": "string"
                                                                             },
+                                                                            "ipAddress": {
+                                                                                "type": "string"
+                                                                            },
                                                                             "provisioningState": {
                                                                                 "type": "string"
                                                                             },
                                                                             "status": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "subnet": {
                                                                                 "type": "string"
                                                                             },
                                                                             "vmDetails": {
@@ -1015,13 +943,13 @@
                                                             }
                                                         },
                                                         "runAfter": {
-                                                            "Read_current_status_of_database_instance": [
+                                                            "Read_db_instance_status": [
                                                                 "Succeeded"
                                                             ]
                                                         },
                                                         "type": "ParseJson"
                                                     },
-                                                    "Read_current_status_of_database_instance": {
+                                                    "Read_db_instance_status": {
                                                         "inputs": {
                                                             "host": {
                                                                 "connection": {
@@ -1029,12 +957,24 @@
                                                                 }
                                                             },
                                                             "method": "get",
-                                                            "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8],'/databaseInstances/',item()?['name'])}",
+                                                            "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('databaseInstances/',item()?['name'])}",
                                                             "queries": {
                                                                 "x-ms-api-version": "2023-10-01-preview"
                                                             }
                                                         },
                                                         "type": "ApiConnection"
+                                                    },
+                                                    "Set_DbInstanceRunning_variable_to_true_or_false_as_per_status_of_DB_Instance": {
+                                                        "inputs": {
+                                                            "name": "DbInstanceStatusRunning",
+                                                            "value": "@if(equals(body('Parse_db_instance_status')?['properties']?['status'], 'Running'), true, false)"
+                                                        },
+                                                        "runAfter": {
+                                                            "Parse_db_instance_status": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "SetVariable"
                                                     }
                                                 },
                                                 "expression": "@equals(variables('DbInstanceStatusRunning'),false)",
@@ -1048,6 +988,20 @@
                                                     ]
                                                 },
                                                 "type": "Until"
+                                            },
+                                            "Wait_for_10_minutes_for_VM_Agent_to_come_up_on_DB_VMs": {
+                                                "inputs": {
+                                                    "interval": {
+                                                        "count": 10,
+                                                        "unit": "Minute"
+                                                    }
+                                                },
+                                                "runAfter": {
+                                                    "For_each_Db_VM_start": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "Wait"
                                             }
                                         },
                                         "foreach": "@body('Parse_database_instance_start_operation_response')?['value']",
@@ -1086,14 +1040,6 @@
                                                                         "ipAddress": {
                                                                             "type": "string"
                                                                         },
-                                                                        "loadBalancerDetails": {
-                                                                            "properties": {
-                                                                                "id": {
-                                                                                    "type": "string"
-                                                                                }
-                                                                            },
-                                                                            "type": "object"
-                                                                        },
                                                                         "provisioningState": {
                                                                             "type": "string"
                                                                         },
@@ -1106,16 +1052,12 @@
                                                                         "vmDetails": {
                                                                             "items": {
                                                                                 "properties": {
-                                                                                    "status": {
-                                                                                        "type": "string"
-                                                                                    },
                                                                                     "virtualMachineId": {
                                                                                         "type": "string"
                                                                                     }
                                                                                 },
                                                                                 "required": [
-                                                                                    "virtualMachineId",
-                                                                                    "status"
+                                                                                    "virtualMachineId"
                                                                                 ],
                                                                                 "type": "object"
                                                                             },
@@ -1145,9 +1087,6 @@
                                                                             "type": "string"
                                                                         }
                                                                     },
-                                                                    "type": "object"
-                                                                },
-                                                                "tags": {
                                                                     "type": "object"
                                                                 },
                                                                 "type": {
@@ -1212,7 +1151,59 @@
                                         }
                                     ]
                                 },
+                                "runAfter": {
+                                    "For_each_central_instance_in_VIS": [
+                                        "Succeeded"
+                                    ]
+                                },
                                 "type": "If"
+                            },
+                            "For_each_central_instance_in_VIS": {
+                                "actions": {
+                                    "For_each_Central_instance_VM_to_start": {
+                                        "actions": {
+                                            "Invoke_start_on_central_instance_VM": {
+                                                "inputs": {
+                                                    "host": {
+                                                        "connection": {
+                                                            "name": "@parameters('$connections')['arm']['connectionId']"
+                                                        }
+                                                    },
+                                                    "method": "post",
+                                                    "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_central_instance_VM_to_start')['virtualMachineId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_central_instance_VM_to_start')['virtualMachineId'], '/')[4])}/providers/@{encodeURIComponent('Microsoft.Compute')}/@{encodeURIComponent('virtualMachines/',split(items('For_each_central_instance_VM_to_start')['virtualMachineId'], '/')[8])}/@{encodeURIComponent('start')}",
+                                                    "queries": {
+                                                        "x-ms-api-version": "2019-12-01"
+                                                    }
+                                                },
+                                                "type": "ApiConnection"
+                                            }
+                                        },
+                                        "foreach": "@item()?['properties']?['vmDetails']",
+                                        "type": "Foreach"
+                                    }
+                                },
+                                "foreach": "@outputs('Parse_Central_Instance_Information_to_start')?['body']?['value']",
+                                "runAfter": {
+                                    "Parse_Central_Instance_Information_to_start": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "Foreach"
+                            },
+                            "Get_Central_Instances_of_the_VIS_to_start": {
+                                "inputs": {
+                                    "host": {
+                                        "connection": {
+                                            "name": "@parameters('$connections')['arm']['connectionId']"
+                                        }
+                                    },
+                                    "method": "get",
+                                    "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8],'/centralInstances')}",
+                                    "queries": {
+                                        "x-ms-api-version": "2023-10-01-preview"
+                                    }
+                                },
+                                "type": "ApiConnection"
                             },
                             "Initiate_VIS_resource_start": {
                                 "inputs": {
@@ -1237,6 +1228,137 @@
                                 },
                                 "type": "ApiConnection"
                             },
+                            "Parse_Central_Instance_Information_to_start": {
+                                "inputs": {
+                                    "content": "@body('Get_Central_Instances_of_the_VIS_to_start')",
+                                    "schema": {
+                                        "properties": {
+                                            "value": {
+                                                "items": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string"
+                                                        },
+                                                        "location": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "properties": {
+                                                            "properties": {
+                                                                "enqueueServerProperties": {
+                                                                    "properties": {
+                                                                        "health": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "ipAddress": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                },
+                                                                "gatewayServerProperties": {
+                                                                    "properties": {
+                                                                        "health": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                },
+                                                                "health": {
+                                                                    "type": "string"
+                                                                },
+                                                                "instanceNo": {
+                                                                    "type": "string"
+                                                                },
+                                                                "messageServerProperties": {
+                                                                    "properties": {
+                                                                        "health": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "ipAddress": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                },
+                                                                "provisioningState": {
+                                                                    "type": "string"
+                                                                },
+                                                                "status": {
+                                                                    "type": "string"
+                                                                },
+                                                                "subnet": {
+                                                                    "type": "string"
+                                                                },
+                                                                "vmDetails": {
+                                                                    "items": {
+                                                                        "properties": {
+                                                                            "virtualMachineId": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "required": [
+                                                                            "virtualMachineId"
+                                                                        ],
+                                                                        "type": "object"
+                                                                    },
+                                                                    "type": "array"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "systemData": {
+                                                            "properties": {
+                                                                "createdAt": {
+                                                                    "type": "string"
+                                                                },
+                                                                "createdBy": {
+                                                                    "type": "string"
+                                                                },
+                                                                "createdByType": {
+                                                                    "type": "string"
+                                                                },
+                                                                "lastModifiedAt": {
+                                                                    "type": "string"
+                                                                },
+                                                                "lastModifiedBy": {
+                                                                    "type": "string"
+                                                                },
+                                                                "lastModifiedByType": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "type": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "name",
+                                                        "type",
+                                                        "location",
+                                                        "systemData",
+                                                        "properties"
+                                                    ],
+                                                    "type": "object"
+                                                },
+                                                "type": "array"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "runAfter": {
+                                    "Get_Central_Instances_of_the_VIS_to_start": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "ParseJson"
+                            },
                             "Reset_VIS_Status_running_variable": {
                                 "inputs": {
                                     "name": "VISStatusRunning",
@@ -1251,36 +1373,6 @@
                             },
                             "Until_VIS_is_in_running_state": {
                                 "actions": {
-                                    "Check_if_VIS_is_running": {
-                                        "actions": {},
-                                        "else": {
-                                            "actions": {
-                                                "Set_VIS_Status_for_Running_to_true": {
-                                                    "inputs": {
-                                                        "name": "VISStatusRunning",
-                                                        "value": true
-                                                    },
-                                                    "type": "SetVariable"
-                                                }
-                                            }
-                                        },
-                                        "expression": {
-                                            "and": [
-                                                {
-                                                    "equals": [
-                                                        "@body('Parse_VIS_Details_for_status')?['properties']?['status']",
-                                                        "Running"
-                                                    ]
-                                                }
-                                            ]
-                                        },
-                                        "runAfter": {
-                                            "Parse_VIS_Details_for_status": [
-                                                "Succeeded"
-                                            ]
-                                        },
-                                        "type": "If"
-                                    },
                                     "Parse_VIS_Details_for_status": {
                                         "inputs": {
                                             "content": "@body('Read_current_status_of_VIS__to_check_if_running')",
@@ -1675,6 +1767,18 @@
                                             }
                                         },
                                         "type": "ApiConnection"
+                                    },
+                                    "Set_variable_for_VIS_Instance_in_Running_State": {
+                                        "inputs": {
+                                            "name": "VISStatusRunning",
+                                            "value": "@if(equals(body('Parse_VIS_Details_for_status')?['properties']?['status'], 'Running'), true, false)"
+                                        },
+                                        "runAfter": {
+                                            "Parse_VIS_Details_for_status": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "SetVariable"
                                     }
                                 },
                                 "expression": "@equals(variables('VISStatusRunning'),true)",
@@ -1703,13 +1807,13 @@
                     "actions": {
                         "For_each_VIS_resource_stop": {
                             "actions": {
-                                "Assume_VIS_Running_to_true_": {
+                                "Assume_the_VIS_to_be_running_": {
                                     "inputs": {
                                         "name": "VISStatusRunning",
                                         "value": true
                                     },
                                     "runAfter": {
-                                        "Delay_until": [
+                                        "Delay_for_softTimeoutSeconds": [
                                             "Succeeded"
                                         ]
                                     },
@@ -1719,20 +1823,20 @@
                                     "actions": {},
                                     "else": {
                                         "actions": {
-                                            "Append_to_array_with_Error-Containing_Resources_": {
+                                            "Append_VIS_Details_to_Error_Array_because_it_did_not_stop_successfully": {
                                                 "inputs": {
                                                     "name": "ErrorResourcesIfAny",
                                                     "value": "@body('Read_current_status_of_VIS')?['name']"
                                                 },
                                                 "type": "AppendToArrayVariable"
                                             },
-                                            "Set_Logic_App_Success_to_false_for_stop": {
+                                            "Set_Logic_App_Success_to_false_as_Stop_VIS_has_failed": {
                                                 "inputs": {
                                                     "name": "LogicAppSuccessExecution",
                                                     "value": false
                                                 },
                                                 "runAfter": {
-                                                    "Append_to_array_with_Error-Containing_Resources_": [
+                                                    "Append_VIS_Details_to_Error_Array_because_it_did_not_stop_successfully": [
                                                         "Succeeded"
                                                     ]
                                                 },
@@ -1772,20 +1876,20 @@
                                                     "actions": {},
                                                     "else": {
                                                         "actions": {
-                                                            "Append_to_array_for_error_resources": {
+                                                            "Append_DB_Instance_details_to_Error_Array_because_it_did_not_stop_successfully": {
                                                                 "inputs": {
                                                                     "name": "ErrorResourcesIfAny",
                                                                     "value": "@body('Read_current_status_of_database_instance_for_stop')?['id']"
                                                                 },
                                                                 "type": "AppendToArrayVariable"
                                                             },
-                                                            "Set_variable_1": {
+                                                            "Set_Logic_App_Successful_Execution_to_be_false_as_Stop_failed_on_DB_Instance": {
                                                                 "inputs": {
                                                                     "name": "LogicAppSuccessExecution",
                                                                     "value": false
                                                                 },
                                                                 "runAfter": {
-                                                                    "Append_to_array_for_error_resources": [
+                                                                    "Append_DB_Instance_details_to_Error_Array_because_it_did_not_stop_successfully": [
                                                                         "Succeeded"
                                                                     ]
                                                                 },
@@ -1804,7 +1908,7 @@
                                                         ]
                                                     },
                                                     "runAfter": {
-                                                        "Until_Db_Instance_has_stopped": [
+                                                        "Until_Db_Instance_is_running": [
                                                             "Succeeded"
                                                         ]
                                                     },
@@ -1834,7 +1938,7 @@
                                                     },
                                                     "type": "ApiConnection"
                                                 },
-                                                "Until_Db_Instance_has_stopped": {
+                                                "Until_Db_Instance_is_running": {
                                                     "actions": {
                                                         "Check_if_database_instance_is_not_running": {
                                                             "actions": {
@@ -1850,7 +1954,19 @@
                                                                 "actions": {}
                                                             },
                                                             "expression": {
-                                                                "and": [
+                                                                "or": [
+                                                                    {
+                                                                        "equals": [
+                                                                            "@body('Parse_db_instance_details')?['properties']?['status']",
+                                                                            "Offline"
+                                                                        ]
+                                                                    },
+                                                                    {
+                                                                        "equals": [
+                                                                            "@body('Parse_db_instance_details')?['properties']?['status']",
+                                                                            "Unavailable"
+                                                                        ]
+                                                                    },
                                                                     {
                                                                         "not": {
                                                                             "equals": [
@@ -1966,9 +2082,9 @@
                                                             "type": "ApiConnection"
                                                         }
                                                     },
-                                                    "expression": "@equals(variables('DbInstanceStatusRunning'),false)",
+                                                    "expression": "@equals(variables('DbInstanceStatusRunning'),true)",
                                                     "limit": {
-                                                        "count": 60,
+                                                        "count": 30,
                                                         "timeout": "PT1H"
                                                     },
                                                     "runAfter": {
@@ -2148,7 +2264,7 @@
                                     },
                                     "type": "If"
                                 },
-                                "Delay_until": {
+                                "Delay_for_softTimeoutSeconds": {
                                     "inputs": {
                                         "until": {
                                             "timestamp": "@addSeconds(utcNow(), parameters('SoftStopTimeout'))"
@@ -2613,7 +2729,7 @@
                                         "timeout": "PT1H"
                                     },
                                     "runAfter": {
-                                        "Assume_VIS_Running_to_true_": [
+                                        "Assume_the_VIS_to_be_running_": [
                                             "Succeeded"
                                         ]
                                     },
