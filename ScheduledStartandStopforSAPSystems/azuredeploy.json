@@ -957,7 +957,7 @@
                                                                 }
                                                             },
                                                             "method": "get",
-                                                            "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('databaseInstances/',item()?['name'])}",
+                                                            "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8],'/databaseInstances/',item()?['name'])}",
                                                             "queries": {
                                                                 "x-ms-api-version": "2023-10-01-preview"
                                                             }
