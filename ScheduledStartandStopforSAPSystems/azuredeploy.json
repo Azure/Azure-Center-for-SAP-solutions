@@ -818,7 +818,7 @@
                                                 "inputs": {
                                                     "host": {
                                                         "connection": {
-                                                            "name": "@parameters('$connections')['arm-1']['connectionId']"
+                                                            "name": "@parameters('$connections')['arm']['connectionId']"
                                                         }
                                                     },
                                                     "method": "get",
@@ -1110,7 +1110,7 @@
                                                                 "inputs": {
                                                                     "host": {
                                                                         "connection": {
-                                                                            "name": "@parameters('$connections')['arm-1']['connectionId']"
+                                                                            "name": "@parameters('$connections')['arm']['connectionId']"
                                                                         }
                                                                     },
                                                                     "method": "get",
@@ -1225,7 +1225,7 @@
                                                         "inputs": {
                                                             "host": {
                                                                 "connection": {
-                                                                    "name": "@parameters('$connections')['arm-1']['connectionId']"
+                                                                    "name": "@parameters('$connections')['arm']['connectionId']"
                                                                 }
                                                             },
                                                             "method": "post",
@@ -1545,7 +1545,7 @@
                                                 "inputs": {
                                                     "host": {
                                                         "connection": {
-                                                            "name": "@parameters('$connections')['arm-1']['connectionId']"
+                                                            "name": "@parameters('$connections')['arm']['connectionId']"
                                                         }
                                                     },
                                                     "method": "post",
@@ -1751,7 +1751,7 @@
                                                             "inputs": {
                                                                 "host": {
                                                                     "connection": {
-                                                                        "name": "@parameters('$connections')['arm-1']['connectionId']"
+                                                                        "name": "@parameters('$connections')['arm']['connectionId']"
                                                                     }
                                                                 },
                                                                 "method": "post",
@@ -1783,7 +1783,7 @@
                                                             "inputs": {
                                                                 "host": {
                                                                     "connection": {
-                                                                        "name": "@parameters('$connections')['arm-1']['connectionId']"
+                                                                        "name": "@parameters('$connections')['arm']['connectionId']"
                                                                     }
                                                                 },
                                                                 "method": "post",
@@ -2415,7 +2415,7 @@
                                                             "inputs": {
                                                                 "host": {
                                                                     "connection": {
-                                                                        "name": "@parameters('$connections')['arm-1']['connectionId']"
+                                                                        "name": "@parameters('$connections')['arm']['connectionId']"
                                                                     }
                                                                 },
                                                                 "method": "get",
@@ -3073,7 +3073,7 @@
                                             "inputs": {
                                                 "host": {
                                                     "connection": {
-                                                        "name": "@parameters('$connections')['arm-1']['connectionId']"
+                                                        "name": "@parameters('$connections')['arm']['connectionId']"
                                                     }
                                                 },
                                                 "method": "get",
