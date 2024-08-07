@@ -818,7 +818,7 @@
                                                 "inputs": {
                                                     "host": {
                                                         "connection": {
-                                                            "name": "@parameters('$connections')['arm']['connectionId']"
+                                                            "name": "@parameters('$connections')['arm-1']['connectionId']"
                                                         }
                                                     },
                                                     "method": "get",
@@ -1110,7 +1110,7 @@
                                                                 "inputs": {
                                                                     "host": {
                                                                         "connection": {
-                                                                            "name": "@parameters('$connections')['arm']['connectionId']"
+                                                                            "name": "@parameters('$connections')['arm-1']['connectionId']"
                                                                         }
                                                                     },
                                                                     "method": "get",
@@ -1225,7 +1225,7 @@
                                                         "inputs": {
                                                             "host": {
                                                                 "connection": {
-                                                                    "name": "@parameters('$connections')['arm']['connectionId']"
+                                                                    "name": "@parameters('$connections')['arm-1']['connectionId']"
                                                                 }
                                                             },
                                                             "method": "post",
@@ -1545,7 +1545,7 @@
                                                 "inputs": {
                                                     "host": {
                                                         "connection": {
-                                                            "name": "@parameters('$connections')['arm']['connectionId']"
+                                                            "name": "@parameters('$connections')['arm-1']['connectionId']"
                                                         }
                                                     },
                                                     "method": "post",
@@ -1747,11 +1747,11 @@
                                             "actions": {
                                                 "Deallocate_App_VMs": {
                                                     "actions": {
-                                                        "Start_app_VMs": {
+                                                        "Deallocate_app_VM": {
                                                             "inputs": {
                                                                 "host": {
                                                                     "connection": {
-                                                                        "name": "@parameters('$connections')['arm']['connectionId']"
+                                                                        "name": "@parameters('$connections')['arm-1']['connectionId']"
                                                                     }
                                                                 },
                                                                 "method": "post",
@@ -1783,7 +1783,7 @@
                                                             "inputs": {
                                                                 "host": {
                                                                     "connection": {
-                                                                        "name": "@parameters('$connections')['arm']['connectionId']"
+                                                                        "name": "@parameters('$connections')['arm-1']['connectionId']"
                                                                     }
                                                                 },
                                                                 "method": "post",
@@ -1839,7 +1839,7 @@
                                         },
                                         "Parse_App_Instance_Information": {
                                             "inputs": {
-                                                "content": "@body('Read_database_instance_stop_operation_response')",
+                                                "content": "@body('Get_App_Instances_of_the_VIS')",
                                                 "schema": {
                                                     "properties": {
                                                         "value": {
@@ -2135,7 +2135,7 @@
                                         "Append_VIS_Details_to_Error_Array_because_it_did_not_stop_successfully": {
                                             "inputs": {
                                                 "name": "ErrorResources",
-                                                "value": "@body('Read_current_status_of_VIS')?['name']"
+                                                "value": "@items('For_each_VIS_resource_stop')"
                                             },
                                             "type": "AppendToArrayVariable"
                                         },
@@ -2415,7 +2415,7 @@
                                                             "inputs": {
                                                                 "host": {
                                                                     "connection": {
-                                                                        "name": "@parameters('$connections')['arm']['connectionId']"
+                                                                        "name": "@parameters('$connections')['arm-1']['connectionId']"
                                                                     }
                                                                 },
                                                                 "method": "get",
@@ -2598,7 +2598,7 @@
                                                 "not": {
                                                     "contains": [
                                                         "@variables('ErrorResources')",
-                                                        "@body('Parse_VIS_Details')?['id']"
+                                                        "@items('For_each_VIS_resource_stop')"
                                                     ]
                                                 }
                                             }
@@ -2636,11 +2636,11 @@
                                                 "Remove_VIS_from_running_VIS_Array": {
                                                     "inputs": {
                                                         "from": "@variables('Temp Array with Running VIS [Stop]')",
-                                                        "where": "@not(equals(item(),body('Parse_VIS_Details')?['id']))"
+                                                        "where": "@not(equals(item(),items('For_each_VIS_resource_stop')))"
                                                     },
                                                     "type": "Query"
                                                 },
-                                                "Set_the_result_of_filter_variable": {
+                                                "Set_Array": {
                                                     "inputs": {
                                                         "name": "Temp Array with Running VIS [Stop]",
                                                         "value": "@body('Remove_VIS_from_running_VIS_Array')"
@@ -3073,7 +3073,7 @@
                                             "inputs": {
                                                 "host": {
                                                     "connection": {
-                                                        "name": "@parameters('$connections')['arm']['connectionId']"
+                                                        "name": "@parameters('$connections')['arm-1']['connectionId']"
                                                     }
                                                 },
                                                 "method": "get",
@@ -3085,7 +3085,7 @@
                                             "type": "ApiConnection"
                                         }
                                     },
-                                    "expression": "@contains(variables('Temp Array with Running VIS [Stop]'),body('Parse_VIS_Details')?['id'])",
+                                    "expression": "@contains(variables('Temp Array with Running VIS [Stop]'),items('For_each_VIS_resource_stop'))",
                                     "limit": {
                                         "count": 3,
                                         "timeout": "PT1H"
