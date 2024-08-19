@@ -358,7 +358,7 @@
                                                 {
                                                     "not": {
                                                         "contains": [
-                                                            "@variables('VIS with running database instances')",
+                                                            "@variables('Temp Array with Stopped VIS [Start]')",
                                                             "@items('For_each_VIS_resource_start')"
                                                         ]
                                                     }
@@ -1043,16 +1043,12 @@
                                                                                     "vmDetails": {
                                                                                         "items": {
                                                                                             "properties": {
-                                                                                                "status": {
-                                                                                                    "type": "string"
-                                                                                                },
                                                                                                 "virtualMachineId": {
                                                                                                     "type": "string"
                                                                                                 }
                                                                                             },
                                                                                             "required": [
-                                                                                                "virtualMachineId",
-                                                                                                "status"
+                                                                                                "virtualMachineId"
                                                                                             ],
                                                                                             "type": "object"
                                                                                         },
@@ -1079,14 +1075,6 @@
                                                                                         "type": "string"
                                                                                     },
                                                                                     "lastModifiedByType": {
-                                                                                        "type": "string"
-                                                                                    }
-                                                                                },
-                                                                                "type": "object"
-                                                                            },
-                                                                            "tags": {
-                                                                                "properties": {
-                                                                                    "CleanUpAfter": {
                                                                                         "type": "string"
                                                                                     }
                                                                                 },
@@ -1265,14 +1253,6 @@
                                                                     "ipAddress": {
                                                                         "type": "string"
                                                                     },
-                                                                    "loadBalancerDetails": {
-                                                                        "properties": {
-                                                                            "id": {
-                                                                                "type": "string"
-                                                                            }
-                                                                        },
-                                                                        "type": "object"
-                                                                    },
                                                                     "provisioningState": {
                                                                         "type": "string"
                                                                     },
@@ -1285,16 +1265,12 @@
                                                                     "vmDetails": {
                                                                         "items": {
                                                                             "properties": {
-                                                                                "status": {
-                                                                                    "type": "string"
-                                                                                },
                                                                                 "virtualMachineId": {
                                                                                     "type": "string"
                                                                                 }
                                                                             },
                                                                             "required": [
-                                                                                "virtualMachineId",
-                                                                                "status"
+                                                                                "virtualMachineId"
                                                                             ],
                                                                             "type": "object"
                                                                         },
@@ -1321,14 +1297,6 @@
                                                                         "type": "string"
                                                                     },
                                                                     "lastModifiedByType": {
-                                                                        "type": "string"
-                                                                    }
-                                                                },
-                                                                "type": "object"
-                                                            },
-                                                            "tags": {
-                                                                "properties": {
-                                                                    "CleanUpAfter": {
                                                                         "type": "string"
                                                                     }
                                                                 },
