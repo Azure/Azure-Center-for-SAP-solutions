@@ -746,6 +746,18 @@
                                                         },
                                                         "type": "AppendToArrayVariable"
                                                     },
+                                                    "Append_to_array_variable_with_failed_VIS_instance_operations_with_VIS_ID": {
+                                                        "inputs": {
+                                                            "name": "List of Resource IDs with failure",
+                                                            "value": " @{body('Parse_result_of_start_op_failed_on_VIS')?['id']}"
+                                                        },
+                                                        "runAfter": {
+                                                            "Append_to_array_variable_with_failed_VIS_instance_operations": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "AppendToArrayVariable"
+                                                    },
                                                     "Parse_result_of_start_op_failed_on_VIS": {
                                                         "inputs": {
                                                             "content": "@body('Initiate_VIS_resource_start')",
@@ -1153,7 +1165,7 @@
                                                                 },
                                                                 "type": "AppendToArrayVariable"
                                                             },
-                                                            "Append_to_array_variable_with_failed_DB_instance_operations_stop-copy": {
+                                                            "Append_to_array_variable_with_failed_DB_instance_operations_stop_failed": {
                                                                 "inputs": {
                                                                     "name": "List of Resource IDs with failure",
                                                                     "value": "@{body('Parse_database_instance_stop_failure_response')?['id']} "
@@ -1331,7 +1343,7 @@
                                                             }
                                                         },
                                                         "method": "get",
-                                                        "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_stop'), '/')[8],'/databaseInstances/',body('Parse_DB_Instance_stop_response')?['name'])}",
+                                                        "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_stop'), '/')[8],'/databaseInstances/',items('For_each_DB_instance_stop')?['name'])}",
                                                         "queries": {
                                                             "x-ms-api-version": "2023-10-01-preview"
                                                         }
