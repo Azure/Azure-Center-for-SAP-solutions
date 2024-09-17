@@ -804,12 +804,6 @@
                                                 "or": [
                                                     {
                                                         "equals": [
-                                                            "@body('Parse_VIS_start_operation_response')?['status']",
-                                                            "Succeeded"
-                                                        ]
-                                                    },
-                                                    {
-                                                        "equals": [
                                                             "@body('Parse_VIS_Status_details')?['properties']?['status']",
                                                             "Running"
                                                         ]
