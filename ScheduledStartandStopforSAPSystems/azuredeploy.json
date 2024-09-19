@@ -240,446 +240,1370 @@
           },
           "triggers": "[if(equals(parameters('Frequency'), 'Month'), variables('monthlySchedule'), variables('otherSchedule'))]",
           "actions": {
-            "SAP_operation_type": {
-              "actions": {
-                "For_each_VIS_resource_start": {
-                  "actions": {
-                    "Database_start_operation": {
-                      "actions": {
-                        "For_each_DB_instance_start": {
-                          "actions": {
-                            "Initiate_database_instance_start": {
-                              "inputs": {
-                                "body": {
-                                  "startVm": "@parameters('IncludeVirtualMachineOperation')"
+            "Check_if_list_of_resources_with_failed_operation_empty": {
+                "actions": {},
+                "else": {
+                    "actions": {
+                        "Terminate": {
+                            "inputs": {
+                                "runError": {
+                                    "code": "The @{parameters('OperationName')} has failed on some resources. Please check the list of resource Ids in the variable - \"List of Resource IDs with failure\""
                                 },
-                                "host": {
-                                  "connection": {
-                                    "name": "@parameters('$connections')['arm']['connectionId']"
-                                  }
-                                },
-                                "method": "post",
-                                "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8],'/databaseinstances/',items('For_each_DB_instance_start')?['name'])}/@{encodeURIComponent(parameters('OperationName'))}",
-                                "queries": {
-                                  "x-ms-api-version": "2023-10-01-preview"
-                                }
-                              },
-                              "runAfter": {},
-                              "type": "ApiConnection"
-                            }
-                          },
-                          "foreach": "@body('Parse_database_instance_start_operation_response')?['value']",
-                          "runAfter": {
-                            "Parse_database_instance_start_operation_response": [
-                              "Succeeded"
+                                "runStatus": "Failed"
+                            },
+                            "type": "Terminate"
+                        }
+                    }
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@length(variables('List of Resource IDs with failure'))",
+                                0
                             ]
-                          },
-                          "type": "Foreach"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "SAP_operation_type": [
+                        "Succeeded",
+                        "TimedOut",
+                        "Failed"
+                    ]
+                },
+                "type": "If"
+            },
+            "Initialize_array_of_VIS_where_db_instance_had_failed_start_or_stop_operation": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "VIS with failed db instance operation",
+                            "type": "array",
+                            "value": []
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_array_of_resources_with_failed_start_or_stop_operation_and_error_msg": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_array_of_resources_with_failed_start_or_stop_operation_and_error_msg": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "FailedResources",
+                            "type": "array",
+                            "value": []
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_for_list_of_resource_IDs_with_failure": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_for_list_of_resource_IDs_with_failure": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "List of Resource IDs with failure",
+                            "type": "array",
+                            "value": []
+                        }
+                    ]
+                },
+                "runAfter": {},
+                "type": "InitializeVariable"
+            },
+            "SAP_operation_type": {
+                "actions": {
+                    "For_each_VIS_resource_start": {
+                        "actions": {
+                            "Database_start_operation": {
+                                "actions": {
+                                    "For_each_DB_instance_start": {
+                                        "actions": {
+                                            "Check_if_success_in_start_db_instance": {
+                                                "actions": {},
+                                                "else": {
+                                                    "actions": {
+                                                        "Append_to_array_variable_with_failed_DB_instance_operations": {
+                                                            "inputs": {
+                                                                "name": "FailedResources",
+                                                                "value": "@{body('Parse_result_of_start_op_failed_on_db_instance')?['id']} has failed with the error @{body('Parse_result_of_start_op_failed_on_db_instance')?['error']?['code']}with message @{body('Parse_result_of_start_op_failed_on_db_instance')?['error']?['message']}"
+                                                            },
+                                                            "runAfter": {
+                                                                "Parse_result_of_start_op_failed_on_db_instance": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
+                                                            "type": "AppendToArrayVariable"
+                                                        },
+                                                        "Is_the_failure_in_starting_due_to_db_instance_already_starting_or_running": {
+                                                            "actions": {},
+                                                            "else": {
+                                                                "actions": {
+                                                                    "Append_db_instance_to_failed_resource_IDs": {
+                                                                        "inputs": {
+                                                                            "name": "List of Resource IDs with failure",
+                                                                            "value": "@body('Parse_result_of_start_op_failed_on_db_instance')?['id']"
+                                                                        },
+                                                                        "type": "AppendToArrayVariable"
+                                                                    },
+                                                                    "Append_to_array_of_VIS_with_failed_db_instance_op_stop": {
+                                                                        "inputs": {
+                                                                            "name": "VIS with failed db instance operation",
+                                                                            "value": "@items('For_each_VIS_resource_start')"
+                                                                        },
+                                                                        "runAfter": {
+                                                                            "Append_db_instance_to_failed_resource_IDs": [
+                                                                                "Succeeded"
+                                                                            ]
+                                                                        },
+                                                                        "type": "AppendToArrayVariable"
+                                                                    }
+                                                                }
+                                                            },
+                                                            "expression": {
+                                                                "and": [
+                                                                    {
+                                                                        "equals": [
+                                                                            "@body('Parse_JSON_for_db_instance_if_start_successful')?['properties']?['status']",
+                                                                            "Running"
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            },
+                                                            "runAfter": {
+                                                                "Append_to_array_variable_with_failed_DB_instance_operations": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
+                                                            "type": "If"
+                                                        },
+                                                        "Parse_result_of_start_op_failed_on_db_instance": {
+                                                            "inputs": {
+                                                                "content": "@body('Initiate_database_instance_start')",
+                                                                "schema": {
+                                                                    "properties": {
+                                                                        "endTime": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "error": {
+                                                                            "properties": {
+                                                                                "code": {
+                                                                                    "type": "string"
+                                                                                },
+                                                                                "message": {
+                                                                                    "type": "string"
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        },
+                                                                        "id": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "name": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "resourceId": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "startTime": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "status": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "type": "ParseJson"
+                                                        }
+                                                    }
+                                                },
+                                                "expression": {
+                                                    "and": [
+                                                        {
+                                                            "contains": [
+                                                                "@body('Parse_result_of_start_operation_on_db_instance')?['status']",
+                                                                "Succeeded"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                "runAfter": {
+                                                    "Parse_JSON_for_db_instance_if_start_successful": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "If"
+                                            },
+                                            "Initiate_database_instance_start": {
+                                                "inputs": {
+                                                    "body": {
+                                                        "startVm": "@parameters('IncludeVirtualMachineOperation')"
+                                                    },
+                                                    "host": {
+                                                        "connection": {
+                                                            "name": "@parameters('$connections')['arm']['connectionId']"
+                                                        }
+                                                    },
+                                                    "method": "post",
+                                                    "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8],'/databaseInstances/',items('For_each_DB_instance_start')?['name'])}/@{encodeURIComponent(parameters('OperationName'))}",
+                                                    "queries": {
+                                                        "x-ms-api-version": "2023-10-01-preview"
+                                                    }
+                                                },
+                                                "type": "ApiConnection"
+                                            },
+                                            "Parse_JSON_for_db_instance_if_start_successful": {
+                                                "inputs": {
+                                                    "content": "@body('Read_DB_instance_details')",
+                                                    "schema": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string"
+                                                            },
+                                                            "location": {
+                                                                "type": "string"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "properties": {
+                                                                "properties": {
+                                                                    "databaseSid": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "databaseType": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "status": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "runAfter": {
+                                                    "Read_DB_instance_details": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "ParseJson"
+                                            },
+                                            "Parse_result_of_start_operation_on_db_instance": {
+                                                "inputs": {
+                                                    "content": "@body('Initiate_database_instance_start')",
+                                                    "schema": {
+                                                        "properties": {
+                                                            "endTime": {
+                                                                "type": "string"
+                                                            },
+                                                            "id": {
+                                                                "type": "string"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "properties": {},
+                                                            "resourceId": {
+                                                                "type": "string"
+                                                            },
+                                                            "startTime": {
+                                                                "type": "string"
+                                                            },
+                                                            "status": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "runAfter": {
+                                                    "Initiate_database_instance_start": [
+                                                        "Succeeded",
+                                                        "Failed"
+                                                    ]
+                                                },
+                                                "type": "ParseJson"
+                                            },
+                                            "Read_DB_instance_details": {
+                                                "inputs": {
+                                                    "host": {
+                                                        "connection": {
+                                                            "name": "@parameters('$connections')['arm']['connectionId']"
+                                                        }
+                                                    },
+                                                    "method": "get",
+                                                    "path": "/subscriptions/@{encodeURIComponent(split(body('Parse_result_of_start_operation_on_db_instance')?['resourceId'], '/')[2])}/resourcegroups/@{encodeURIComponent(split(body('Parse_result_of_start_operation_on_db_instance')?['resourceId'], '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(body('Parse_result_of_start_operation_on_db_instance')?['resourceId'], '/')[8],'/databaseInstances/',split(body('Parse_result_of_start_operation_on_db_instance')?['resourceId'], '/')[10])}",
+                                                    "queries": {
+                                                        "x-ms-api-version": "2023-10-01-preview"
+                                                    }
+                                                },
+                                                "runAfter": {
+                                                    "Parse_result_of_start_operation_on_db_instance": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "ApiConnection"
+                                            }
+                                        },
+                                        "foreach": "@body('Parse_database_instance_start_operation_response')?['value']",
+                                        "runAfter": {
+                                            "Parse_database_instance_start_operation_response": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "Foreach"
+                                    },
+                                    "Parse_database_instance_start_operation_response": {
+                                        "inputs": {
+                                            "content": "@body('Read_database_instance_start_operation_response')",
+                                            "schema": {
+                                                "properties": {
+                                                    "value": {
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string"
+                                                                },
+                                                                "location": {
+                                                                    "type": "string"
+                                                                },
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "properties": {
+                                                                    "properties": {
+                                                                        "databaseSid": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "databaseType": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "ipAddress": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "loadBalancerDetails": {
+                                                                            "properties": {
+                                                                                "id": {
+                                                                                    "type": "string"
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        },
+                                                                        "provisioningState": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "status": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "subnet": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "vmDetails": {
+                                                                            "items": {
+                                                                                "properties": {
+                                                                                    "status": {
+                                                                                        "type": "string"
+                                                                                    },
+                                                                                    "virtualMachineId": {
+                                                                                        "type": "string"
+                                                                                    }
+                                                                                },
+                                                                                "required": [
+                                                                                    "virtualMachineId",
+                                                                                    "status"
+                                                                                ],
+                                                                                "type": "object"
+                                                                            },
+                                                                            "type": "array"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                },
+                                                                "systemData": {
+                                                                    "properties": {
+                                                                        "createdAt": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "createdBy": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "createdByType": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "lastModifiedAt": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "lastModifiedBy": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "lastModifiedByType": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                },
+                                                                "tags": {
+                                                                    "type": "object"
+                                                                },
+                                                                "type": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "id",
+                                                                "name",
+                                                                "type",
+                                                                "location",
+                                                                "systemData",
+                                                                "properties"
+                                                            ],
+                                                            "type": "object"
+                                                        },
+                                                        "type": "array"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "runAfter": {
+                                            "Read_database_instance_start_operation_response": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "ParseJson"
+                                    },
+                                    "Read_database_instance_start_operation_response": {
+                                        "inputs": {
+                                            "host": {
+                                                "connection": {
+                                                    "name": "@parameters('$connections')['arm']['connectionId']"
+                                                }
+                                            },
+                                            "method": "get",
+                                            "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8],'/databaseInstances')}",
+                                            "queries": {
+                                                "x-ms-api-version": "2023-10-01-preview"
+                                            }
+                                        },
+                                        "type": "ApiConnection"
+                                    }
+                                },
+                                "else": {
+                                    "actions": {}
+                                },
+                                "expression": {
+                                    "and": [
+                                        {
+                                            "equals": [
+                                                "@parameters('IncludeDatabaseOperations')",
+                                                true
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "type": "If"
+                            },
+                            "Did_any_db_instance_start_operation_on_VIS_fail": {
+                                "actions": {
+                                    "Append_to_array_variable_that_start_op_not_triggered_on_VIS": {
+                                        "inputs": {
+                                            "name": "FailedResources",
+                                            "value": "Start operation not triggered on @{items('For_each_VIS_resource_start')} as db instance start failed. "
+                                        },
+                                        "type": "AppendToArrayVariable"
+                                    }
+                                },
+                                "else": {
+                                    "actions": {
+                                        "Check_if_success_in_start_VIS_instance": {
+                                            "actions": {},
+                                            "else": {
+                                                "actions": {
+                                                    "Append_to_array_variable_with_failed_VIS_instance_operations": {
+                                                        "inputs": {
+                                                            "name": "FailedResources",
+                                                            "value": " @{body('Parse_result_of_start_op_failed_on_VIS')?['id']}has failed with the error @{body('Parse_result_of_start_op_failed_on_VIS')?['error']?['code']} with message @{body('Parse_result_of_start_op_failed_on_VIS')?['error']?['message']}"
+                                                        },
+                                                        "runAfter": {
+                                                            "Parse_result_of_start_op_failed_on_VIS": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "AppendToArrayVariable"
+                                                    },
+                                                    "Append_to_array_variable_with_failed_VIS_instance_operations_with_VIS_ID": {
+                                                        "inputs": {
+                                                            "name": "List of Resource IDs with failure",
+                                                            "value": " @{body('Parse_result_of_start_op_failed_on_VIS')?['id']}"
+                                                        },
+                                                        "runAfter": {
+                                                            "Append_to_array_variable_with_failed_VIS_instance_operations": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "AppendToArrayVariable"
+                                                    },
+                                                    "Parse_result_of_start_op_failed_on_VIS": {
+                                                        "inputs": {
+                                                            "content": "@body('Initiate_VIS_resource_start')",
+                                                            "schema": {
+                                                                "properties": {
+                                                                    "endTime": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "error": {
+                                                                        "properties": {
+                                                                            "code": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "message": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "id": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "resourceId": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "startTime": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "status": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "ParseJson"
+                                                    }
+                                                }
+                                            },
+                                            "expression": {
+                                                "or": [
+                                                    {
+                                                        "equals": [
+                                                            "@body('Parse_VIS_Status_details')?['properties']?['status']",
+                                                            "Running"
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            "runAfter": {
+                                                "Parse_VIS_Status_details": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "If"
+                                        },
+                                        "Initiate_VIS_resource_start": {
+                                            "inputs": {
+                                                "body": {
+                                                    "startVm": "@parameters('IncludeVirtualMachineOperation')"
+                                                },
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['arm']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "post",
+                                                "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8])}/@{encodeURIComponent(parameters('OperationName'))}",
+                                                "queries": {
+                                                    "x-ms-api-version": "2023-10-01-preview"
+                                                }
+                                            },
+                                            "type": "ApiConnection"
+                                        },
+                                        "Parse_VIS_Status_details": {
+                                            "inputs": {
+                                                "content": "@body('Read_VIS_status')",
+                                                "schema": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string"
+                                                        },
+                                                        "location": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "properties": {
+                                                            "properties": {
+                                                                "status": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "type": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "runAfter": {
+                                                "Read_VIS_status": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "ParseJson"
+                                        },
+                                        "Parse_VIS_start_operation_response": {
+                                            "inputs": {
+                                                "content": "@body('Initiate_VIS_resource_start')",
+                                                "schema": {
+                                                    "properties": {
+                                                        "endTime": {
+                                                            "type": "string"
+                                                        },
+                                                        "id": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "properties": {},
+                                                        "resourceId": {
+                                                            "type": "string"
+                                                        },
+                                                        "startTime": {
+                                                            "type": "string"
+                                                        },
+                                                        "status": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "runAfter": {
+                                                "Initiate_VIS_resource_start": [
+                                                    "Succeeded",
+                                                    "Failed"
+                                                ]
+                                            },
+                                            "type": "ParseJson"
+                                        },
+                                        "Read_VIS_status": {
+                                            "inputs": {
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['arm']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "get",
+                                                "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8])}",
+                                                "queries": {
+                                                    "x-ms-api-version": "2023-10-01-preview"
+                                                }
+                                            },
+                                            "runAfter": {
+                                                "Parse_VIS_start_operation_response": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "ApiConnection"
+                                        }
+                                    }
+                                },
+                                "expression": {
+                                    "and": [
+                                        {
+                                            "contains": [
+                                                "@variables('VIS with failed db instance operation')",
+                                                "@items('For_each_VIS_resource_start')"
+                                            ]
+                                        },
+                                        {
+                                            "equals": [
+                                                "",
+                                                ""
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "runAfter": {
+                                    "Database_start_operation": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "If"
+                            }
                         },
-                        "Parse_database_instance_start_operation_response": {
-                          "inputs": {
-                            "content": "@body('Read_database_instance_start_operation_response')",
-                            "schema": {
-                              "properties": {
-                                "value": {
-                                  "items": {
-                                    "properties": {
-                                      "id": {
-                                        "type": "string"
-                                      },
-                                      "location": {
-                                        "type": "string"
-                                      },
-                                      "name": {
-                                        "type": "string"
-                                      },
-                                      "properties": {
-                                        "properties": {
-                                          "databaseSid": {
-                                            "type": "string"
-                                          },
-                                          "databaseType": {
-                                            "type": "string"
-                                          },
-                                          "ipAddress": {
-                                            "type": "string"
-                                          },
-                                          "loadBalancerDetails": {
+                        "foreach": "@parameters('ResourceName')",
+                        "runtimeConfiguration": {
+                            "concurrency": {
+                                "repetitions": 20
+                            }
+                        },
+                        "type": "Foreach"
+                    }
+                },
+                "else": {
+                    "actions": {
+                        "For_each_VIS_resource_stop": {
+                            "actions": {
+                                "Check_if_VIS_Stop_operation_was_successful": {
+                                    "actions": {},
+                                    "else": {
+                                        "actions": {
+                                            "Append_to_array_variable_with_failed_VIS_operations_stop": {
+                                                "inputs": {
+                                                    "name": "FailedResources",
+                                                    "value": "@{body('Parse_VIS_Stop_operation_with_error')?['id']} has failed with the error @{body('Parse_VIS_Stop_operation_with_error')?['error']?['code']} with message @{body('Parse_VIS_Stop_operation_with_error')?['error']?['message']}"
+                                                },
+                                                "runAfter": {
+                                                    "Parse_VIS_Stop_operation_with_error": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "AppendToArrayVariable"
+                                            },
+                                            "Check_if_VIS_Stopped": {
+                                                "actions": {},
+                                                "else": {
+                                                    "actions": {
+                                                        "Append_VIS_to_list_of_resource_IDs_with_failure_[not_stopped_successfully]": {
+                                                            "inputs": {
+                                                                "name": "List of Resource IDs with failure",
+                                                                "value": "@body('Parse_JSON_to_check_VIS_Status_if_stopped')?['id']"
+                                                            },
+                                                            "type": "AppendToArrayVariable"
+                                                        }
+                                                    }
+                                                },
+                                                "expression": {
+                                                    "or": [
+                                                        {
+                                                            "equals": [
+                                                                "@body('Parse_JSON_to_check_VIS_Status_if_stopped')?['properties']?['status']",
+                                                                "Offline"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "equals": [
+                                                                "@body('Parse_JSON_to_check_VIS_Status_if_stopped')?['properties']?['status']",
+                                                                "Unavailable"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                "runAfter": {
+                                                    "Parse_JSON_to_check_VIS_Status_if_stopped": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "If"
+                                            },
+                                            "Parse_JSON_to_check_VIS_Status_if_stopped": {
+                                                "inputs": {
+                                                    "content": "@body('Read_VIS_details')",
+                                                    "schema": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string"
+                                                            },
+                                                            "location": {
+                                                                "type": "string"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "properties": {
+                                                                "properties": {
+                                                                    "status": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "type": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "runAfter": {
+                                                    "Read_VIS_details": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "ParseJson"
+                                            },
+                                            "Parse_VIS_Stop_operation_with_error": {
+                                                "inputs": {
+                                                    "content": "@body('Initiate_VIS_resource_stop')",
+                                                    "schema": {
+                                                        "properties": {
+                                                            "endTime": {
+                                                                "type": "string"
+                                                            },
+                                                            "error": {
+                                                                "properties": {
+                                                                    "code": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "message": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "id": {
+                                                                "type": "string"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "resourceId": {
+                                                                "type": "string"
+                                                            },
+                                                            "startTime": {
+                                                                "type": "string"
+                                                            },
+                                                            "status": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "ParseJson"
+                                            },
+                                            "Read_VIS_details": {
+                                                "inputs": {
+                                                    "host": {
+                                                        "connection": {
+                                                            "name": "@parameters('$connections')['arm']['connectionId']"
+                                                        }
+                                                    },
+                                                    "method": "get",
+                                                    "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_stop'), '/')[8])}",
+                                                    "queries": {
+                                                        "x-ms-api-version": "2023-10-01-preview"
+                                                    }
+                                                },
+                                                "runAfter": {
+                                                    "Append_to_array_variable_with_failed_VIS_operations_stop": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "ApiConnection"
+                                            }
+                                        }
+                                    },
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "equals": [
+                                                    "@body('Parse_VIS_stop_operation_response')?['status']",
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            {
+                                                "equals": [
+                                                    "",
+                                                    ""
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "runAfter": {
+                                        "Parse_VIS_stop_operation_response": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "If"
+                                },
+                                "Database_stop_operation": {
+                                    "actions": {
+                                        "For_each_DB_instance_stop": {
+                                            "actions": {
+                                                "If_database_instance_stopped_successfully": {
+                                                    "actions": {},
+                                                    "else": {
+                                                        "actions": {
+                                                            "Append_to_array_variable_with_failed_DB_instance_operations_stop": {
+                                                                "inputs": {
+                                                                    "name": "FailedResources",
+                                                                    "value": "@{body('Parse_database_instance_stop_failure_response')?['id']} has failed with the error @{body('Parse_database_instance_stop_failure_response')?['error']?['code']}  with message @{body('Parse_database_instance_stop_failure_response')?['error']?['message']}"
+                                                                },
+                                                                "runAfter": {
+                                                                    "Parse_database_instance_stop_failure_response": [
+                                                                        "Succeeded"
+                                                                    ]
+                                                                },
+                                                                "type": "AppendToArrayVariable"
+                                                            },
+                                                            "Append_to_array_variable_with_failed_DB_instance_operations_stop_failed": {
+                                                                "inputs": {
+                                                                    "name": "List of Resource IDs with failure",
+                                                                    "value": "@{body('Parse_database_instance_stop_failure_response')?['id']} "
+                                                                },
+                                                                "runAfter": {
+                                                                    "Append_to_array_variable_with_failed_DB_instance_operations_stop": [
+                                                                        "Succeeded"
+                                                                    ]
+                                                                },
+                                                                "type": "AppendToArrayVariable"
+                                                            },
+                                                            "Parse_database_instance_stop_failure_response": {
+                                                                "inputs": {
+                                                                    "content": "@body('Initiate_database_instance_stop')",
+                                                                    "schema": {
+                                                                        "properties": {
+                                                                            "endTime": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "error": {
+                                                                                "properties": {
+                                                                                    "code": {
+                                                                                        "type": "string"
+                                                                                    },
+                                                                                    "message": {
+                                                                                        "type": "string"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            },
+                                                                            "id": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "name": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "resourceId": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "startTime": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "status": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    }
+                                                                },
+                                                                "type": "ParseJson"
+                                                            }
+                                                        }
+                                                    },
+                                                    "expression": {
+                                                        "or": [
+                                                            {
+                                                                "equals": [
+                                                                    "@body('Parse_JSON_for_db_instance_details_after_stop')?['properties']?['status']",
+                                                                    "Offline"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "equals": [
+                                                                    "@body('Parse_JSON_for_db_instance_details_after_stop')?['properties']?['status']",
+                                                                    "Unavailable"
+                                                                ]
+                                                            }
+                                                        ]
+                                                    },
+                                                    "runAfter": {
+                                                        "Parse_JSON_for_db_instance_details_after_stop": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "If"
+                                                },
+                                                "Initiate_database_instance_stop": {
+                                                    "inputs": {
+                                                        "body": {
+                                                            "deallocateVm": "@parameters('IncludeVirtualMachineOperation')",
+                                                            "softStopTimeoutSeconds": "@parameters('SoftStopTimeout')"
+                                                        },
+                                                        "host": {
+                                                            "connection": {
+                                                                "name": "@parameters('$connections')['arm']['connectionId']"
+                                                            }
+                                                        },
+                                                        "method": "post",
+                                                        "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_stop'), '/')[8],'/databaseinstances/',items('For_each_DB_instance_stop')?['name'])}/@{encodeURIComponent(parameters('OperationName'))}",
+                                                        "queries": {
+                                                            "x-ms-api-version": "2023-10-01-preview"
+                                                        }
+                                                    },
+                                                    "type": "ApiConnection"
+                                                },
+                                                "Parse_DB_Instance_stop_response": {
+                                                    "inputs": {
+                                                        "content": "@body('Initiate_database_instance_stop')",
+                                                        "schema": {
+                                                            "properties": {
+                                                                "endTime": {
+                                                                    "type": "string"
+                                                                },
+                                                                "id": {
+                                                                    "type": "string"
+                                                                },
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "properties": {},
+                                                                "resourceId": {
+                                                                    "type": "string"
+                                                                },
+                                                                "startTime": {
+                                                                    "type": "string"
+                                                                },
+                                                                "status": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "runAfter": {
+                                                        "Initiate_database_instance_stop": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "ParseJson"
+                                                },
+                                                "Parse_JSON_for_db_instance_details_after_stop": {
+                                                    "inputs": {
+                                                        "content": "@body('Read_db_instance_details_after_stop')",
+                                                        "schema": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string"
+                                                                },
+                                                                "location": {
+                                                                    "type": "string"
+                                                                },
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "properties": {
+                                                                    "properties": {
+                                                                        "databaseSid": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "databaseType": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "status": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "runAfter": {
+                                                        "Read_db_instance_details_after_stop": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "ParseJson"
+                                                },
+                                                "Read_db_instance_details_after_stop": {
+                                                    "inputs": {
+                                                        "host": {
+                                                            "connection": {
+                                                                "name": "@parameters('$connections')['arm']['connectionId']"
+                                                            }
+                                                        },
+                                                        "method": "get",
+                                                        "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_stop'), '/')[8],'/databaseInstances/',items('For_each_DB_instance_stop')?['name'])}",
+                                                        "queries": {
+                                                            "x-ms-api-version": "2023-10-01-preview"
+                                                        }
+                                                    },
+                                                    "runAfter": {
+                                                        "Parse_DB_Instance_stop_response": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "ApiConnection"
+                                                }
+                                            },
+                                            "foreach": "@body('Parse_database_instance_stop_operation_response')?['value']",
+                                            "runAfter": {
+                                                "Parse_database_instance_stop_operation_response": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "Foreach"
+                                        },
+                                        "Parse_database_instance_stop_operation_response": {
+                                            "inputs": {
+                                                "content": "@body('Read_database_instance_stop_operation_response')",
+                                                "schema": {
+                                                    "properties": {
+                                                        "value": {
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "location": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "properties": {
+                                                                        "properties": {
+                                                                            "databaseSid": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "databaseType": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "ipAddress": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "loadBalancerDetails": {
+                                                                                "properties": {
+                                                                                    "id": {
+                                                                                        "type": "string"
+                                                                                    }
+                                                                                },
+                                                                                "type": "object"
+                                                                            },
+                                                                            "provisioningState": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "status": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "subnet": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "vmDetails": {
+                                                                                "items": {
+                                                                                    "properties": {
+                                                                                        "status": {
+                                                                                            "type": "string"
+                                                                                        },
+                                                                                        "virtualMachineId": {
+                                                                                            "type": "string"
+                                                                                        }
+                                                                                    },
+                                                                                    "required": [
+                                                                                        "virtualMachineId",
+                                                                                        "status"
+                                                                                    ],
+                                                                                    "type": "object"
+                                                                                },
+                                                                                "type": "array"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "systemData": {
+                                                                        "properties": {
+                                                                            "createdAt": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "createdBy": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "createdByType": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "lastModifiedAt": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "lastModifiedBy": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "lastModifiedByType": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "tags": {
+                                                                        "type": "object"
+                                                                    },
+                                                                    "type": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "id",
+                                                                    "name",
+                                                                    "type",
+                                                                    "location",
+                                                                    "systemData",
+                                                                    "properties"
+                                                                ],
+                                                                "type": "object"
+                                                            },
+                                                            "type": "array"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "runAfter": {
+                                                "Read_database_instance_stop_operation_response": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "ParseJson"
+                                        },
+                                        "Read_database_instance_stop_operation_response": {
+                                            "inputs": {
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['arm']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "get",
+                                                "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_stop'), '/')[8],'/databaseInstances')}",
+                                                "queries": {
+                                                    "x-ms-api-version": "2023-10-01-preview"
+                                                }
+                                            },
+                                            "type": "ApiConnection"
+                                        }
+                                    },
+                                    "else": {
+                                        "actions": {}
+                                    },
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "equals": [
+                                                    "@parameters('IncludeDatabaseOperations')",
+                                                    true
+                                                ]
+                                            },
+                                            {
+                                                "not": {
+                                                    "contains": [
+                                                        "@variables('List of Resource IDs with failure')",
+                                                        "@items('For_each_VIS_resource_stop')"
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    "runAfter": {
+                                        "Check_if_VIS_Stop_operation_was_successful": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "If"
+                                },
+                                "Initiate_VIS_resource_stop": {
+                                    "inputs": {
+                                        "body": {
+                                            "deallocateVm": "@parameters('IncludeVirtualMachineOperation')",
+                                            "softStopTimeoutSeconds": "@parameters('SoftStopTimeout')"
+                                        },
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['arm']['connectionId']"
+                                            }
+                                        },
+                                        "method": "post",
+                                        "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_stop'), '/')[8])}/@{encodeURIComponent(parameters('OperationName'))}",
+                                        "queries": {
+                                            "x-ms-api-version": "2023-10-01-preview"
+                                        }
+                                    },
+                                    "type": "ApiConnection"
+                                },
+                                "Parse_VIS_stop_operation_response": {
+                                    "inputs": {
+                                        "content": "@body('Initiate_VIS_resource_stop')",
+                                        "schema": {
                                             "properties": {
-                                              "id": {
-                                                "type": "string"
-                                              }
+                                                "endTime": {
+                                                    "type": "string"
+                                                },
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "properties": {},
+                                                "resourceId": {
+                                                    "type": "string"
+                                                },
+                                                "startTime": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "string"
+                                                }
                                             },
                                             "type": "object"
-                                          },
-                                          "provisioningState": {
-                                            "type": "string"
-                                          },
-                                          "status": {
-                                            "type": "string"
-                                          },
-                                          "subnet": {
-                                            "type": "string"
-                                          },
-                                          "vmDetails": {
-                                            "items": {
-                                              "properties": {
-                                                "status": {
-                                                  "type": "string"
-                                                },
-                                                "virtualMachineId": {
-                                                  "type": "string"
-                                                }
-                                              },
-                                              "required": [
-                                                "virtualMachineId",
-                                                "status"
-                                              ],
-                                              "type": "object"
-                                            },
-                                            "type": "array"
-                                          }
-                                        },
-                                        "type": "object"
-                                      },
-                                      "systemData": {
-                                        "properties": {
-                                          "createdAt": {
-                                            "type": "string"
-                                          },
-                                          "createdBy": {
-                                            "type": "string"
-                                          },
-                                          "createdByType": {
-                                            "type": "string"
-                                          },
-                                          "lastModifiedAt": {
-                                            "type": "string"
-                                          },
-                                          "lastModifiedBy": {
-                                            "type": "string"
-                                          },
-                                          "lastModifiedByType": {
-                                            "type": "string"
-                                          }
-                                        },
-                                        "type": "object"
-                                      },
-                                      "tags": {
-                                        "type": "object"
-                                      },
-                                      "type": {
-                                        "type": "string"
-                                      }
+                                        }
                                     },
-                                    "required": [
-                                      "id",
-                                      "name",
-                                      "type",
-                                      "location",
-                                      "systemData",
-                                      "properties"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  "type": "array"
+                                    "runAfter": {
+                                        "Initiate_VIS_resource_stop": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "ParseJson"
                                 }
-                              },
-                              "type": "object"
-                            }
-                          },
-                          "runAfter": {
-                            "Read_database_instance_start_operation_response": [
-                              "Succeeded"
-                            ]
-                          },
-                          "type": "ParseJson"
-                        },
-                        "Read_database_instance_start_operation_response": {
-                          "inputs": {
-                            "host": {
-                              "connection": {
-                                "name": "@parameters('$connections')['arm']['connectionId']"
-                              }
                             },
-                            "method": "get",
-                            "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8],'/databaseInstances')}",
-                            "queries": {
-                              "x-ms-api-version": "2023-10-01-preview"
-                            }
-                          },
-                          "runAfter": {},
-                          "type": "ApiConnection"
-                        }
-                      },
-                      "expression": {
-                        "and": [
-                          {
-                            "equals": [
-                              "@parameters('IncludeDatabaseOperations')",
-                              true
-                            ]
-                          }
-                        ]
-                      },
-                      "runAfter": {},
-                      "type": "If"
-                    },
-                    "Initiate_VIS_resource_start": {
-                      "inputs": {
-                        "body": {
-                          "startVm": "@parameters('IncludeVirtualMachineOperation')"
-                        },
-                        "host": {
-                          "connection": {
-                            "name": "@parameters('$connections')['arm']['connectionId']"
-                          }
-                        },
-                        "method": "post",
-                        "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_start'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_start'), '/')[8])}/@{encodeURIComponent(parameters('OperationName'))}",
-                        "queries": {
-                          "x-ms-api-version": "2023-10-01-preview"
-                        }
-                      },
-                      "runAfter": {
-                        "Database_start_operation": ["Succeeded"]
-                      },
-                      "type": "ApiConnection"
-                    }
-                  },
-                  "foreach": "@parameters('ResourceName')",
-                  "runAfter": {},
-                  "type": "Foreach",
-                  "runtimeConfiguration": "[if(equals(parameters('OperationExecution'), 'sequence'), variables('sequentialOperations'), variables('concurrentOperations'))]"
-                }
-              },
-              "else": {
-                "actions": {
-                  "For_each_VIS_resource_stop": {
-                    "actions": {
-                      "Database_stop_operation": {
-                        "actions": {
-                          "For_each_DB_instance_stop": {
-                            "actions": {
-                              "Initiate_database_instance_stop": {
-                                "inputs": {
-                                  "body": {
-                                    "softStopTimeoutSeconds": "@parameters('SoftStopTimeout')",
-                                    "deallocateVm": "@parameters('IncludeVirtualMachineOperation')"
-                                  },
-                                  "host": {
-                                    "connection": {
-                                      "name": "@parameters('$connections')['arm']['connectionId']"
-                                    }
-                                  },
-                                  "method": "post",
-                                  "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_stop'), '/')[8],'/databaseinstances/',items('For_each_DB_instance_stop')?['name'])}/@{encodeURIComponent(parameters('OperationName'))}",
-                                  "queries": {
-                                    "x-ms-api-version": "2023-10-01-preview"
-                                  }
-                                },
-                                "runAfter": {},
-                                "type": "ApiConnection"
-                              }
-                            },
-                            "foreach": "@body('Parse_database_instance_stop_operation_response')?['value']",
-                            "runAfter": {
-                              "Parse_database_instance_stop_operation_response": [
-                                "Succeeded"
-                              ]
+                            "foreach": "@parameters('ResourceName')",
+                            "runtimeConfiguration": {
+                                "concurrency": {
+                                    "repetitions": 20
+                                }
                             },
                             "type": "Foreach"
-                          },
-                          "Parse_database_instance_stop_operation_response": {
-                            "inputs": {
-                              "content": "@body('Read_database_instance_stop_operation_response')",
-                              "schema": {
-                                "properties": {
-                                  "value": {
-                                    "items": {
-                                      "properties": {
-                                        "id": {
-                                          "type": "string"
-                                        },
-                                        "location": {
-                                          "type": "string"
-                                        },
-                                        "name": {
-                                          "type": "string"
-                                        },
-                                        "properties": {
-                                          "properties": {
-                                            "databaseSid": {
-                                              "type": "string"
-                                            },
-                                            "databaseType": {
-                                              "type": "string"
-                                            },
-                                            "ipAddress": {
-                                              "type": "string"
-                                            },
-                                            "loadBalancerDetails": {
-                                              "properties": {
-                                                "id": {
-                                                  "type": "string"
-                                                }
-                                              },
-                                              "type": "object"
-                                            },
-                                            "provisioningState": {
-                                              "type": "string"
-                                            },
-                                            "status": {
-                                              "type": "string"
-                                            },
-                                            "subnet": {
-                                              "type": "string"
-                                            },
-                                            "vmDetails": {
-                                              "items": {
-                                                "properties": {
-                                                  "status": {
-                                                    "type": "string"
-                                                  },
-                                                  "virtualMachineId": {
-                                                    "type": "string"
-                                                  }
-                                                },
-                                                "required": [
-                                                  "virtualMachineId",
-                                                  "status"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              "type": "array"
-                                            }
-                                          },
-                                          "type": "object"
-                                        },
-                                        "systemData": {
-                                          "properties": {
-                                            "createdAt": {
-                                              "type": "string"
-                                            },
-                                            "createdBy": {
-                                              "type": "string"
-                                            },
-                                            "createdByType": {
-                                              "type": "string"
-                                            },
-                                            "lastModifiedAt": {
-                                              "type": "string"
-                                            },
-                                            "lastModifiedBy": {
-                                              "type": "string"
-                                            },
-                                            "lastModifiedByType": {
-                                              "type": "string"
-                                            }
-                                          },
-                                          "type": "object"
-                                        },
-                                        "tags": {
-                                          "type": "object"
-                                        },
-                                        "type": {
-                                          "type": "string"
-                                        }
-                                      },
-                                      "required": [
-                                        "id",
-                                        "name",
-                                        "type",
-                                        "location",
-                                        "systemData",
-                                        "properties"
-                                      ],
-                                      "type": "object"
-                                    },
-                                    "type": "array"
-                                  }
-                                },
-                                "type": "object"
-                              }
-                            },
-                            "runAfter": {
-                              "Read_database_instance_stop_operation_response": [
-                                "Succeeded"
-                              ]
-                            },
-                            "type": "ParseJson"
-                          },
-                          "Read_database_instance_stop_operation_response": {
-                            "inputs": {
-                              "host": {
-                                "connection": {
-                                  "name": "@parameters('$connections')['arm']['connectionId']"
-                                }
-                              },
-                              "method": "get",
-                              "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_stop'), '/')[8],'/databaseInstances')}",
-                              "queries": {
-                                "x-ms-api-version": "2023-10-01-preview"
-                              }
-                            },
-                            "runAfter": {},
-                            "type": "ApiConnection"
-                          }
-                        },
-                        "expression": {
-                          "and": [
-                            {
-                              "equals": [
-                                "@parameters('IncludeDatabaseOperations')",
-                                true
-                              ]
-                            }
-                          ]
-                        },
-                        "runAfter": {
-                          "Initiate_VIS_resource_stop": ["Succeeded"]
-                        },
-                        "type": "If"
-                      },
-                      "Initiate_VIS_resource_stop": {
-                        "inputs": {
-                          "body": {
-                            "softStopTimeoutSeconds": "@parameters('SoftStopTimeout')",
-                            "deallocateVm": "@parameters('IncludeVirtualMachineOperation')"
-                          },
-                          "host": {
-                            "connection": {
-                              "name": "@parameters('$connections')['arm']['connectionId']"
-                            }
-                          },
-                          "method": "post",
-                          "path": "/subscriptions/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[2])}/resourcegroups/@{encodeURIComponent(split(items('For_each_VIS_resource_stop'), '/')[4])}/providers/@{encodeURIComponent('Microsoft.Workloads')}/@{encodeURIComponent('sapVirtualInstances/',split(items('For_each_VIS_resource_stop'), '/')[8])}/@{encodeURIComponent(parameters('OperationName'))}",
-                          "queries": {
-                            "x-ms-api-version": "2023-10-01-preview"
-                          }
-                        },
-                        "runAfter": {},
-                        "type": "ApiConnection"
-                      }
-                    },
-                    "foreach": "@parameters('ResourceName')",
-                    "runAfter": {},
-                    "type": "Foreach",
-                    "runtimeConfiguration": "[if(equals(parameters('OperationExecution'), 'true'), variables('sequentialOperations'), variables('concurrentOperations'))]"
-                  }
-                }
-              },
-              "expression": {
-                "and": [
-                  {
-                    "equals": ["@parameters('OperationName')", "start"]
-                  }
-                ]
-              },
-              "runAfter": {},
-              "type": "If"
+                        }
+                    }
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@parameters('OperationName')",
+                                "start"
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_array_of_VIS_where_db_instance_had_failed_start_or_stop_operation": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "If"
             }
-          },
+        },
           "outputs": {}
         },
         "parameters": {
