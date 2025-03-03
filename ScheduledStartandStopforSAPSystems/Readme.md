@@ -2,7 +2,7 @@
 
 The example [ARM template](https://github.com/Azure/Azure-Center-for-SAP-solutions/blob/main/ScheduledStartandStopforSAPSystems/azuredeploy.json) enables you to deploy a Logic App that triggers start and stop of SAP systems, HANA database and underlying Virtual machines at a schedule like Daily, Weekly or Monthly. You can make changes to the ARM template or deployed Logic App to suit any specific requirements. 
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2FAzure-Center-for-SAP-solutions%2Fmain%2FScheduledStartandStopforSAPSystems%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2FAzure-Center-for-SAP-solutions%2Fmain%2FScheduledStartandStopforSAPSystems%2FcreateUiDefinition.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2FAzure-Center-for-SAP-solutions%2Fayushija/fix-bug%2FScheduledStartandStopforSAPSystems%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2FAzure-Center-for-SAP-solutions%2Fmain%2FScheduledStartandStopforSAPSystems%2FcreateUiDefinition.json)
 
 ## Setup start and stop schedule for SAP systems
 In this guide, you’ll learn how to automate start and stop of SAP systems and their underlying Virtual machines using Azure Center for SAP solutions and other Azure services like Logic apps. 
