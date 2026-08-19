@@ -117,27 +117,6 @@ function ConvertTo-TagHashtable
     return $Tags
 }
 
-function ConvertTo-ManagedResourcesNetworkAccessType
-{
-    param(
-        [AllowEmptyString()]
-        [String]$NetworkAccessType
-    )
-
-    if ([string]::IsNullOrWhiteSpace($NetworkAccessType))
-    {
-        return $null
-    }
-
-    $NetworkAccessType = $NetworkAccessType.Trim()
-    if ($NetworkAccessType -notin @('Private', 'Public'))
-    {
-        throw "Network access type '$NetworkAccessType' is not valid. It must be either 'Private' or 'Public'."
-    }
-
-    return $NetworkAccessType
-}
-
 # Importing the input file
 $file = Import-CSV $InputFile
 
@@ -182,8 +161,17 @@ foreach($line in $file)
         throw "Storage account name '$ManagedRgStorageAccountName' is not valid. It must only contain lowercase alphanumeric characters and be between 3 and 24 characters in length. Please check https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftstorage for more details."
     }
 
-    $ManagedResourcesNetworkAccessType = ConvertTo-ManagedResourcesNetworkAccessType `
-        -NetworkAccessType $ManagedResourcesNetworkAccessType
+    if (-not [string]::IsNullOrWhiteSpace($ManagedResourcesNetworkAccessType))
+    {
+        $ManagedResourcesNetworkAccessType = $ManagedResourcesNetworkAccessType.Trim()
+        if ($ManagedResourcesNetworkAccessType -notin @('Private', 'Public'))
+        {
+            throw "Network access type '$ManagedResourcesNetworkAccessType' is not valid. It must be either 'Private' or 'Public'."
+        }
+    }
+    else {
+        $ManagedResourcesNetworkAccessType = $null
+    }
 
     # Creating script block for parallel execution
     $ScriptBlockCopy = {
