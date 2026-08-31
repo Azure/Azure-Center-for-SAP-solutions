@@ -51,6 +51,72 @@
 # Declaring variable as array for storing job definitions
 $Jobdefs = @()
 
+function ConvertTo-TagHashtable
+{
+    param(
+        [AllowEmptyString()]
+        [String]$Tag
+    )
+
+    $Tags = @{}
+    if ([string]::IsNullOrWhiteSpace($Tag))
+    {
+        return $Tags
+    }
+
+    foreach ($TagEntry in ($Tag -split ';'))
+    {
+        $TagEntry = $TagEntry.Trim()
+        if ($TagEntry.Length -eq 0)
+        {
+            continue
+        }
+
+        $TagParts = $TagEntry -split '=', 2
+        if ($TagParts.Count -ne 2)
+        {
+            throw "Tag entry '$TagEntry' is not valid. Use the format 'key = ""value""; key2 = ""value2""'."
+        }
+
+        $TagName = $TagParts[0].Trim()
+        $TagValue = $TagParts[1].Trim()
+        if ($TagName.Length -eq 0)
+        {
+            throw "Tag entry '$TagEntry' has an empty tag name."
+        }
+
+        $HasDoubleQuotes = $TagValue.StartsWith('"') -or $TagValue.EndsWith('"')
+        $HasSingleQuotes = $TagValue.StartsWith("'") -or $TagValue.EndsWith("'")
+        if ($HasDoubleQuotes)
+        {
+            if ($TagValue.Length -lt 2 -or -not ($TagValue.StartsWith('"') -and $TagValue.EndsWith('"')))
+            {
+                throw "Tag entry '$TagEntry' has mismatched double quotes."
+            }
+
+            $TagValue = $TagValue.Substring(1, $TagValue.Length - 2)
+        }
+        elseif ($HasSingleQuotes)
+        {
+            if ($TagValue.Length -lt 2 -or -not ($TagValue.StartsWith("'") -and $TagValue.EndsWith("'")))
+            {
+                throw "Tag entry '$TagEntry' has mismatched single quotes."
+            }
+
+            $TagValue = $TagValue.Substring(1, $TagValue.Length - 2)
+        }
+
+        if ($Tags.ContainsKey($TagName))
+        {
+            throw "Tag name '$TagName' is specified more than once."
+        }
+
+        $Tags[$TagName] = $TagValue
+    }
+
+    return $Tags
+}
+
 # Importing the input file
 $file = Import-CSV $InputFile
 
@@ -68,16 +134,16 @@ foreach($line in $file)
     $ManagedRgName = $line.ManagedResourceGroupName
     $ManagedRgStorageAccountName = $line.ManagedRgStorageAccountName
     $ManagedResourcesNetworkAccessType = $line.ManagedResourcesNetworkAccessType
-    $Tag = $line.Tag
+    $Tags = ConvertTo-TagHashtable -Tag $line.Tag
 
-    # Checking if the optional parameters are provided with valid names in the input file and adding them to the command
+    # Checking if the optional parameters are provided with valid names in the input file
     if ($ManagedRgName -match '^[a-zA-Z0-9\._\-\(\)]{1,90}$')
     {
-        $ArgManagedRgName = "-ManagedResourceGroupName $ManagedRgName"
+        $ManagedRgName = $ManagedRgName.Trim()
     }
     elseif ([string]::IsNullOrEmpty($ManagedRgName) -or $ManagedRgName.Trim().Length -eq 0)
     {
-        $ArgManagedRgName = ""
+        $ManagedRgName = $null
     }
     else {
         throw "Resource group name '$ManagedRgName' is not valid. It must only contain alphanumeric characters, periods, underscores, hyphens, and parentheses, and be between 1 and 90 characters in length. Please check https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftresources for more details."
@@ -85,43 +151,65 @@ foreach($line in $file)
     
     if ($ManagedRgStorageAccountName -match '^[a-z0-9]{3,24}$')
     {
-        $ARGManagedRgStorageAccountName = "-ManagedRgStorageAccountName $ManagedRgStorageAccountName"
+        $ManagedRgStorageAccountName = $ManagedRgStorageAccountName.Trim()
     }
     elseif ([string]::IsNullOrEmpty($ManagedRgStorageAccountName) -or $ManagedRgStorageAccountName.Trim().Length -eq 0)
     {
-        $ARGManagedRgStorageAccountName = ""
+        $ManagedRgStorageAccountName = $null
     }
     else {
         throw "Storage account name '$ManagedRgStorageAccountName' is not valid. It must only contain lowercase alphanumeric characters and be between 3 and 24 characters in length. Please check https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftstorage for more details."
     }
 
-    if ($ManagedResourcesNetworkAccessType -match 'private' -or $ManagedResourcesNetworkAccessType -match 'public')
+    if (-not [string]::IsNullOrWhiteSpace($ManagedResourcesNetworkAccessType))
     {
-        $ArgManagedResourcesNetworkAccessType = "-ManagedResourcesNetworkAccessType $ManagedResourcesNetworkAccessType"
-    }
-    elseif ([string]::IsNullOrEmpty($ManagedResourcesNetworkAccessType) -or $ManagedResourcesNetworkAccessType.Trim().Length -eq 0)
-    {
-        $ArgManagedResourcesNetworkAccessType = ""
+        $ManagedResourcesNetworkAccessType = $ManagedResourcesNetworkAccessType.Trim()
+        if ($ManagedResourcesNetworkAccessType -notin @('Private', 'Public'))
+        {
+            throw "Network access type '$ManagedResourcesNetworkAccessType' is not valid. It must be either 'Private' or 'Public'."
+        }
     }
     else {
-        throw "Network access type '$ManagedResourcesNetworkAccessType' is not valid. It must be either 'private' or 'public'."
+        $ManagedResourcesNetworkAccessType = $null
     }
 
     # Creating script block for parallel execution
     $ScriptBlockCopy = {
         param($ResourceGroup, $SID, $Location, $Environment, $Product, $CentralServerVmId, `
-        $ArgManagedRgName, $MsiID, $Tag, $ARGManagedRgStorageAccountName, $ArgManagedResourcesNetworkAccessType)
-        $ResourceGroupClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$ResourceGroup")
-        $SIDClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$SID")
-        $LocationClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$Location")
-        $EnvironmentClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$Environment")
-        $ProductClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$Product")
-        $CentralServerVmIdClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$CentralServerVmId")
-        $ArgManagedRgNameClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$ArgManagedRgName")
-        $MsiIDClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$MsiID")
-        $ARGManagedRgStorageAccountNameClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$ARGManagedRgStorageAccountName")
-        $ArgManagedResourcesNetworkAccessTypeClean = [System.Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent("$ArgManagedResourcesNetworkAccessType")
-        Invoke-Expression -Command "New-AzWorkloadsSapVirtualInstance -ResourceGroupName '$ResourceGroupClean' -Name '$SIDClean' -Location '$LocationClean' -Environment '$EnvironmentClean' -SapProduct '$ProductClean' -CentralServerVmId '$CentralServerVmIdClean' -IdentityType 'UserAssigned' -UserAssignedIdentity @{'$MsiIDClean'=@{}} -Tag @{$Tag} $ArgManagedRgNameClean $ARGManagedRgStorageAccountNameClean $ArgManagedResourcesNetworkAccessTypeClean"
+        $ManagedRgName, $MsiID, $Tags, $ManagedRgStorageAccountName, $ManagedResourcesNetworkAccessType)
+
+        $RegistrationParameters = @{
+            ResourceGroupName = $ResourceGroup
+            Name = $SID
+            Location = $Location
+            Environment = $Environment
+            SapProduct = $Product
+            CentralServerVmId = $CentralServerVmId
+            IdentityType = 'UserAssigned'
+            UserAssignedIdentity = @{ $MsiID = @{} }
+        }
+
+        if ($Tags.Count -gt 0)
+        {
+            $RegistrationParameters.Tag = $Tags
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($ManagedRgName))
+        {
+            $RegistrationParameters.ManagedResourceGroupName = $ManagedRgName
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($ManagedRgStorageAccountName))
+        {
+            $RegistrationParameters.ManagedRgStorageAccountName = $ManagedRgStorageAccountName
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($ManagedResourcesNetworkAccessType))
+        {
+            $RegistrationParameters.ManagedResourcesNetworkAccessType = $ManagedResourcesNetworkAccessType
+        }
+
+        New-AzWorkloadsSapVirtualInstance @RegistrationParameters
     }
     
     # Generating random string for job name
@@ -132,8 +220,8 @@ foreach($line in $file)
         if ((Get-Job -State Running).Count -le $MaxParallelJobs)
         {
             Start-Job -ScriptBlock $ScriptBlockCopy -ArgumentList $ResourceGroup, $SID, $Location, `
-                $Environment, $Product, $CentralServerVmId, $ArgManagedRgName, $MsiID, $Tag, `
-                $ARGManagedRgStorageAccountName, $ArgManagedResourcesNetworkAccessType -Name $random
+                $Environment, $Product, $CentralServerVmId, $ManagedRgName, $MsiID, $Tags, `
+                $ManagedRgStorageAccountName, $ManagedResourcesNetworkAccessType -Name $random
             break
         }
         else
